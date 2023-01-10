@@ -152,6 +152,15 @@ int her_encoding(unsigned char *msg)
 			tmp_y = gf_pow_cal(af_pnt[i][1], pole_basis_pow[j][1]);
 			tmp_prod = gf_multp(tmp_x, tmp_y);
 			cwd_poly[i] = gf_add(cwd_poly[i], gf_multp(tmp_prod, msg[j]));
+#if 0			
+			DEBUG_NOTICE("cwd_poly_cal: %ld | %x %x | %ld %ld | %x\n",
+		                 i,
+		                 af_pnt[i][0],
+		                 af_pnt[i][1],
+		                 pole_basis_pow[j][0],
+		                 pole_basis_pow[j][1],
+		                 cwd_poly[i]);
+#endif		                 
 		}
 		DEBUG_NOTICE("cwd_poly: %ld | %x\n",
 		             i,

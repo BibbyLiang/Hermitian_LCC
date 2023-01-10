@@ -938,6 +938,7 @@ void gf_count_switch(unsigned char count_switch)
 #endif
 }
 
+/*ÉýÐò*/
 void BubbleSort4(float *A, int len, long long *A_idx)
 {
     int low = 0, high = len - 1;
@@ -977,6 +978,7 @@ void BubbleSort4(float *A, int len, long long *A_idx)
     }
 }
 
+/*½µÐò*/
 void BubbleSort5(float *A, int len, long long *A_idx)
 {
     int low = 0, high = len - 1;
