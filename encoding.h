@@ -8,6 +8,8 @@ extern long long pole_basis_pow[MESSAGE_LEN][2];
 extern unsigned char msg_poly[MESSAGE_LEN];
 extern unsigned char cwd_poly[CODEWORD_LEN];
 extern unsigned char recv_poly[CODEWORD_LEN];
+extern unsigned char est_msg_poly[MESSAGE_LEN];
+extern unsigned char est_cwd_poly[CODEWORD_LEN];
 
 extern int affine_points_cal();
 extern int pole_basis_cal();

@@ -10,6 +10,8 @@ long long pole_basis_pow[MESSAGE_LEN][2];
 unsigned char msg_poly[MESSAGE_LEN];
 unsigned char cwd_poly[CODEWORD_LEN];
 unsigned char recv_poly[CODEWORD_LEN];
+unsigned char est_msg_poly[MESSAGE_LEN];
+unsigned char est_cwd_poly[CODEWORD_LEN];
 
 int affine_points_cal()
 {
@@ -134,12 +136,18 @@ int her_encoding(unsigned char *msg)
 		msg_poly[i] = 0xFF;
 	}
 #endif
-#if 0
-	msg[0] = 0x0;
-	msg[1] = 0xFF;
-	msg[2] = 0x0;
-	msg[3] = 0x0;
+#if 0//(1 == TEST_MODE)
+	msg[0] = 0xFF;
+	msg[1] = 0x0;
+	msg[2] = 0xFF;
+	msg[3] = 0x2;
 	msg[4] = 0xFF;
+	for(i = 0; i < MESSAGE_LEN; i++)
+	{
+		DEBUG_NOTICE("test_msg_poly: %ld | %x\n",
+		             i,
+		             msg_poly[i]);
+	}
 #endif	
 	
 	for(i = 0; i < CODEWORD_LEN; i++)

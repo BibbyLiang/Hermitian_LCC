@@ -199,5 +199,17 @@ int trans_over_chnl()
 				recv_poly,
 				CODEWORD_LEN);
 
+#if 0//(1 == TEST_MODE)
+	recv_poly[0] = 0xFF;
+	recv_poly[1] = 0xFF;
+	recv_poly[2] = 0x1;
+	recv_poly[3] = 0x1;
+	recv_poly[4] = 0x0;
+	//recv_poly[4] = 0xFF;
+	recv_poly[5] = 0xFF;
+	recv_poly[6] = 0x1;
+	recv_poly[7] = 0x1;
+#endif
+
 	return 0;
 }
