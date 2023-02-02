@@ -180,7 +180,7 @@ int trans_over_chnl()
 			 symbol_num);
 
 	/*transmission over channel*/
-	DEBUG_IMPOTANT("Transmission over Channel:\n");
+	DEBUG_NOTICE("Transmission over Channel:\n");
 	for(i = 0; i < symbol_num; i++)
 	{
 		if(0 == (i % GF_Q))
@@ -191,7 +191,7 @@ int trans_over_chnl()
 		recv_seq[i][1] = recv_seq[i][1] + awgn_gen(eb2n0);
 		DEBUG_NOTICE("%f %f\n", recv_seq[i][0], recv_seq[i][1]);
 	}
-	DEBUG_IMPOTANT("\n");
+	DEBUG_NOTICE("\n");
 
 	/*demodulation*/
 	bpsk_demod((float **)recv_seq,
@@ -200,14 +200,13 @@ int trans_over_chnl()
 				CODEWORD_LEN);
 
 #if 0//(1 == TEST_MODE)
-	recv_poly[0] = 0xFF;
-	recv_poly[1] = 0xFF;
-	recv_poly[2] = 0x1;
-	recv_poly[3] = 0x1;
-	recv_poly[4] = 0x0;
-	//recv_poly[4] = 0xFF;
-	recv_poly[5] = 0xFF;
-	recv_poly[6] = 0x1;
+	recv_poly[0] = 0x1;
+	recv_poly[1] = 0x2;
+	recv_poly[2] = 0xFF;
+	recv_poly[3] = 0xFF;
+	recv_poly[4] = 0x1;
+	recv_poly[5] = 0x2;
+	recv_poly[6] = 0x2;
 	recv_poly[7] = 0x1;
 #endif
 

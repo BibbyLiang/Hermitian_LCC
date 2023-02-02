@@ -4,19 +4,19 @@
 #define GF_Q			2
 #if (2 == GF_Q)
 #define GF_FIELD		4
-#define MESSAGE_LEN     5
+#define MESSAGE_LEN     4
 #endif
 #if (3 == GF_Q)
 #define GF_FIELD        8
-#define MESSAGE_LEN     3
+#define MESSAGE_LEN     5
 #endif
 #if (4 == GF_Q)
 #define GF_FIELD        16
-#define MESSAGE_LEN     7
+#define MESSAGE_LEN     49
 #endif
 #if (6 == GF_Q)
 #define GF_FIELD        64
-#define MESSAGE_LEN     21
+#define MESSAGE_LEN     409
 #endif
 #if (8 == GF_Q)
 #define GF_FIELD        256
@@ -32,10 +32,20 @@
 
 #define OUTPUT_LOG		 0
 
-#define ETA				 2
+#define ETA				 1
 
-#define MAX_DEGREE		 8
+#define MAX_DEGREE		 GF_FIELD
+#define CFG_DYM_SIZE	 1
+#if (0 == CFG_DYM_SIZE)
 #define MAX_POLY_TERM_SIZE	((MAX_DEGREE + 1) * (MAX_DEGREE + 1) * (MAX_DEGREE + 1))
+#else
+#define X_MAX_SIZE	     (GF_Q * 2)
+#define Y_MAX_SIZE		 (MAX_DEGREE + 1)
+#define Z_MAX_SIZE		 2
+#define MAX_POLY_TERM_SIZE	(X_MAX_SIZE * Y_MAX_SIZE * Z_MAX_SIZE)
+#endif
 #define KOT_INTP_POLY_NUM	(2 * GF_Q)
+
+#define CFG_FAC_FREE	 0
 
 #endif

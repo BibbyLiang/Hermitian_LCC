@@ -15,5 +15,6 @@ extern int affine_points_cal();
 extern int pole_basis_cal();
 extern int rnd_msg_gen();
 extern int her_encoding(unsigned char *msg);
+extern int her_convert(unsigned char *poly);
 
 #endif

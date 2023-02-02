@@ -3,10 +3,13 @@
 #include "debug_info.h"
 #include "rnd.h"
 #include "gf_cal.h"
+#include "interpolation.h"
 #include "encoding.h"
 
 unsigned char af_pnt[CODEWORD_LEN][2];
 long long pole_basis_pow[MESSAGE_LEN][2];
+long long mono_degree_table[GF_Q + 1][MAX_DEGREE][2];
+long long mono_order_table[GF_Q + 1][MAX_DEGREE][2];
 unsigned char msg_poly[MESSAGE_LEN];
 unsigned char cwd_poly[CODEWORD_LEN];
 unsigned char recv_poly[CODEWORD_LEN];
@@ -77,7 +80,8 @@ int affine_points_cal()
 
 int pole_basis_cal()
 {
-	long long i = 0, j = 0;
+	long long i = 0, j = 0, k = 0, l = 0;
+	long long cmp_val = 0;
 	
 	for(i = 0; i < MESSAGE_LEN; i++)
 	{
@@ -86,7 +90,7 @@ int pole_basis_cal()
 			pole_basis_pow[i][j] = 0;
 		}
 	}
-	
+#if 0	
 	for(i = 0; i < (MESSAGE_LEN - 1); i++)
 	{
 		if(0 == pole_basis_pow[i][0])
@@ -99,12 +103,76 @@ int pole_basis_cal()
 			pole_basis_pow[i + 1][0] = pole_basis_pow[i][0] - 1;
 			pole_basis_pow[i + 1][1] = pole_basis_pow[i][1] + 1;;
 		}
-		DEBUG_NOTICE("pole_basis_pow: %ld | %ld %ld\n",
+		DEBUG_NOTICE("pole_basis_pow: %ld | %ld %ld | %ld\n",
 		             i + 1,
 		             pole_basis_pow[i + 1][0],
-		             pole_basis_pow[i + 1][1]);
+		             pole_basis_pow[i + 1][1],
+		             GF_Q * pole_basis_pow[i + 1][0] + (GF_Q + 1) * pole_basis_pow[i + 1][1]);
+	}
+#else
+	for(i = 0; i < (GF_Q + 1); i++)
+	{
+		for(j = 0; j < MAX_DEGREE; j++)
+		{
+			mono_order_table[i][j][0] = -1;
+			mono_order_table[i][j][1] = -1;
+			
+			mono_degree_table[i][j][0] = i * GF_Q + j * (GF_Q + 1);
+		}
 	}
 	
+	for(i = 0; i < (GF_Q + 1); i++)
+	{
+		for(j = 0; j < MAX_DEGREE; j++)
+		{
+			cmp_val = 0;
+			
+			for(k = 0; k < (GF_Q + 1); k++)
+			{
+				for(l = 0; l < MAX_DEGREE; l++)
+				{
+					if((k == i)
+						&& (l == j))
+					{
+						continue;
+					}
+					else
+					{
+						if(mono_degree_table[i][j][0] > mono_degree_table[k][l][0])
+						{
+							cmp_val++;
+						}
+					}
+				}
+			}
+			mono_order_table[i][j][0] = cmp_val;
+			DEBUG_NOTICE("mono_order_table: %ld %ld | %ld\n",
+			             i,
+			             j,
+			             mono_order_table[i][j][0]);
+		}
+	}
+	
+	for(k = 0; k < MESSAGE_LEN; k++)
+	{
+		for(i = 0; i < (GF_Q + 1); i++)
+		{
+			for(j = 0; j < MAX_DEGREE; j++)
+			{
+				if(k == mono_order_table[i][j][0])
+				{
+					pole_basis_pow[k][0] = i;
+					pole_basis_pow[k][1] = j;
+					DEBUG_NOTICE("pole_basis_pow: %ld | %ld %ld | %ld\n",
+					             k,
+					             pole_basis_pow[k][0],
+					             pole_basis_pow[k][1],
+					             GF_Q * pole_basis_pow[k][0] + (GF_Q + 1) * pole_basis_pow[k][1]);
+				}
+			}
+		}
+	}
+#endif
 	return 0;
 }
 
@@ -136,12 +204,11 @@ int her_encoding(unsigned char *msg)
 		msg_poly[i] = 0xFF;
 	}
 #endif
-#if 0//(1 == TEST_MODE)
+#if 1//(1 == TEST_MODE)
 	msg[0] = 0xFF;
-	msg[1] = 0x0;
-	msg[2] = 0xFF;
+	msg[1] = 0x2;
+	msg[2] = 0x2;
 	msg[3] = 0x2;
-	msg[4] = 0xFF;
 	for(i = 0; i < MESSAGE_LEN; i++)
 	{
 		DEBUG_NOTICE("test_msg_poly: %ld | %x\n",
@@ -175,5 +242,76 @@ int her_encoding(unsigned char *msg)
 		             cwd_poly[i]);
 	}
 	
+	return 0;
+}
+
+int her_convert(unsigned char *poly)
+{
+	long long i = 0, j = 0;
+	int degree_over_flag = 0;
+	int convert_flag = 0;
+	unsigned char poly_tmp[MAX_POLY_TERM_SIZE];
+	memcpy(poly_tmp, poly, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+
+	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
+	{
+		degree_over_flag = 0;
+
+		if((0xFF != poly_tmp[i])
+			&& (GF_Q < x_term_degree_table[i]))
+		{
+			degree_over_flag = 1;
+		}
+		/*x^(w + 1) = y^w + y*/
+		if(0 != degree_over_flag)
+		{
+			for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
+			{
+				if(((x_term_degree_table[i] - GF_Q - 1) == x_term_degree_table[j])
+					&& ((GF_Q + y_term_degree_table[i]) == y_term_degree_table[j])
+					&& (z_term_degree_table[i] == z_term_degree_table[j]))
+				{
+					poly[j] = gf_add(poly_tmp[i], poly[j]);
+				}
+				if(((x_term_degree_table[i] - GF_Q - 1) == x_term_degree_table[j])
+					&& ((1 + y_term_degree_table[i]) == y_term_degree_table[j])
+					&& (z_term_degree_table[i] == z_term_degree_table[j]))
+				{
+					poly[j] = gf_add(poly_tmp[i], poly[j]);
+				}
+			}
+			/*clear this over-degree term*/
+			poly[i] = 0xFF;
+			convert_flag++;
+		}
+	}
+
+	if(0 != convert_flag)
+	{
+		DEBUG_NOTICE("convert_flag: %ld\n", convert_flag);
+		for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
+		{
+			if(0xFF != poly_tmp[i])
+			{
+				DEBUG_NOTICE("poly_convert_before: %ld %ld %ld | %x\n",
+				             x_term_degree_table[i],
+				             y_term_degree_table[i],
+				             z_term_degree_table[i],
+				             poly_tmp[i]);
+			}
+		}
+		for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
+		{
+			if(0xFF != poly[i])
+			{
+				DEBUG_NOTICE("poly_convert: %ld %ld %ld | %x\n",
+				             x_term_degree_table[i],
+				             y_term_degree_table[i],
+				             z_term_degree_table[i],
+				             poly[i]);
+			}
+		}
+	}
+
 	return 0;
 }
