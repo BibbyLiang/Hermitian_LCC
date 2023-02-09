@@ -190,10 +190,25 @@ int rnd_msg_gen()
 		             msg_poly[i]);
 	}
 
+#if 0//(1 == TEST_MODE)
+	memset(msg_poly, 0xFF, sizeof(unsigned char) * MESSAGE_LEN);
+	msg_poly[0] = 0x0;
+	msg_poly[1] = 0x2;
+	msg_poly[2] = 0x0;
+	msg_poly[3] = 0x2;
+	msg_poly[4] = 0x2;
+	for(i = 0; i < MESSAGE_LEN; i++)
+	{
+		DEBUG_NOTICE("test_msg_poly: %ld | %x\n",
+		             i,
+		             msg_poly[i]);
+	}
+#endif
+
 	return 0;
 }
 
-int her_encoding(unsigned char *msg)
+int her_encoding(unsigned char *msg, unsigned char *cwd)
 {
 	long long i = 0, j = 0;
 	unsigned char tmp_x = 0x0, tmp_y = 0x0, tmp_prod = 0x0;
@@ -203,30 +218,18 @@ int her_encoding(unsigned char *msg)
 	{
 		msg_poly[i] = 0xFF;
 	}
-#endif
-#if 1//(1 == TEST_MODE)
-	msg[0] = 0xFF;
-	msg[1] = 0x2;
-	msg[2] = 0x2;
-	msg[3] = 0x2;
-	for(i = 0; i < MESSAGE_LEN; i++)
-	{
-		DEBUG_NOTICE("test_msg_poly: %ld | %x\n",
-		             i,
-		             msg_poly[i]);
-	}
 #endif	
 	
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
-		cwd_poly[i] = 0xFF;
+		cwd[i] = 0xFF;
 		
 		for(j = 0; j < MESSAGE_LEN; j++)
 		{
 			tmp_x = gf_pow_cal(af_pnt[i][0], pole_basis_pow[j][0]);
 			tmp_y = gf_pow_cal(af_pnt[i][1], pole_basis_pow[j][1]);
 			tmp_prod = gf_multp(tmp_x, tmp_y);
-			cwd_poly[i] = gf_add(cwd_poly[i], gf_multp(tmp_prod, msg[j]));
+			cwd[i] = gf_add(cwd[i], gf_multp(tmp_prod, msg[j]));
 #if 0			
 			DEBUG_NOTICE("cwd_poly_cal: %ld | %x %x | %ld %ld | %x\n",
 		                 i,
@@ -239,7 +242,7 @@ int her_encoding(unsigned char *msg)
 		}
 		DEBUG_NOTICE("cwd_poly: %ld | %x\n",
 		             i,
-		             cwd_poly[i]);
+		             cwd[i]);
 	}
 	
 	return 0;
@@ -251,41 +254,45 @@ int her_convert(unsigned char *poly)
 	int degree_over_flag = 0;
 	int convert_flag = 0;
 	unsigned char poly_tmp[MAX_POLY_TERM_SIZE];
-	memcpy(poly_tmp, poly, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
 
-	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
+	while(0 != her_degree_check(poly))
 	{
-		degree_over_flag = 0;
+		memcpy(poly_tmp, poly, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+	
+		for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
+		{
+			degree_over_flag = 0;
 
-		if((0xFF != poly_tmp[i])
-			&& (GF_Q < x_term_degree_table[i]))
-		{
-			degree_over_flag = 1;
-		}
-		/*x^(w + 1) = y^w + y*/
-		if(0 != degree_over_flag)
-		{
-			for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
+			if((0xFF != poly_tmp[i])
+				&& (GF_Q < x_term_degree_table[i]))
 			{
-				if(((x_term_degree_table[i] - GF_Q - 1) == x_term_degree_table[j])
-					&& ((GF_Q + y_term_degree_table[i]) == y_term_degree_table[j])
-					&& (z_term_degree_table[i] == z_term_degree_table[j]))
-				{
-					poly[j] = gf_add(poly_tmp[i], poly[j]);
-				}
-				if(((x_term_degree_table[i] - GF_Q - 1) == x_term_degree_table[j])
-					&& ((1 + y_term_degree_table[i]) == y_term_degree_table[j])
-					&& (z_term_degree_table[i] == z_term_degree_table[j]))
-				{
-					poly[j] = gf_add(poly_tmp[i], poly[j]);
-				}
+				degree_over_flag = 1;
 			}
-			/*clear this over-degree term*/
-			poly[i] = 0xFF;
-			convert_flag++;
+			/*x^(w + 1) = y^w + y*/
+			if(0 != degree_over_flag)
+			{
+				for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
+				{
+					if(((x_term_degree_table[i] - GF_Q - 1) == x_term_degree_table[j])
+						&& ((GF_Q + y_term_degree_table[i]) == y_term_degree_table[j])
+						&& (z_term_degree_table[i] == z_term_degree_table[j]))
+					{
+						poly[j] = gf_add(poly_tmp[i], poly[j]);
+					}
+					if(((x_term_degree_table[i] - GF_Q - 1) == x_term_degree_table[j])
+						&& ((1 + y_term_degree_table[i]) == y_term_degree_table[j])
+						&& (z_term_degree_table[i] == z_term_degree_table[j]))
+					{
+						poly[j] = gf_add(poly_tmp[i], poly[j]);
+					}
+				}
+				/*clear this over-degree term*/
+				poly[i] = 0xFF;
+				convert_flag++;
+			}
 		}
 	}
-
+#if 1
 	if(0 != convert_flag)
 	{
 		DEBUG_NOTICE("convert_flag: %ld\n", convert_flag);
@@ -312,6 +319,25 @@ int her_convert(unsigned char *poly)
 			}
 		}
 	}
+#endif
 
 	return 0;
+}
+
+unsigned char her_degree_check(unsigned char *poly)
+{
+	long long i = 0;
+	unsigned char degree_over_flag = 0;
+
+	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
+	{
+		if((0xFF != poly[i])
+			&& (GF_Q < x_term_degree_table[i]))
+		{
+			degree_over_flag = 1;
+			break;
+		}
+	}
+
+	return degree_over_flag;
 }

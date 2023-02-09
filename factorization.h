@@ -11,5 +11,11 @@ extern int recur_poly_update(unsigned char *poly, long long pole_idx, unsigned c
 extern int factorization_recur(unsigned char *poly, unsigned char *est_msg);
 extern int poly_dev_cal(unsigned char *poly, unsigned char *x_dev_poly, unsigned char *y_dev_poly);
 extern int factorization_free();
+extern unsigned char poly_term_dev_cal(long long term_idx, unsigned char term_coef, unsigned char x_val, unsigned char y_val);
+extern int poly_dev_build(unsigned char *poly, unsigned char *poly_dev);
+extern int fac_her_lagrange_poly_construct();
+extern int fac_ret_poly_construct();
+extern int fac_ret_encoding();
+extern int fac_dev_init();
 
 #endif

@@ -3,6 +3,8 @@
 
 #include "cfg_decoding.h"
 
+extern clock_t start, stop;
+extern float runtime;
 extern long long err_cnt;
 
 extern float chnl_rel_matrix[CODEWORD_LEN + 1][CODEWORD_LEN];

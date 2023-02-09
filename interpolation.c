@@ -573,6 +573,23 @@ int poly_dev_test(unsigned char *test_poly_seq)
 			             min_intp_poly[i]);
 		}
 	}
+	
+#if 0
+	long long zero_root_cnt = 0;
+	unsigned char q1_eva_val = 0xFF;
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		q1_eva_val = poly_eva_x_y(q1_poly_coef, af_pnt[i][0], af_pnt[i][1]);
+		if(0xFF == q1_eva_val)
+		{
+			zero_root_cnt++;
+		}
+	}
+	if(0 != zero_root_cnt)
+	{
+		DEBUG_SYS("zero_root_cnt: %ld\n", zero_root_cnt);
+	}
+#endif
 
 	return 0;
 }

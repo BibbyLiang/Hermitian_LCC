@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "time.h"
 #include "debug_info.h"
 #include "math.h"
 #include "gf_cal.h"
@@ -8,10 +9,13 @@
 #include "channel.h"
 #include "interpolation.h"
 #include "factorization.h"
+#include "re_encoding.h"
 #include "lcc_decoding.h"
 
 #define PI	3.1415926
 
+clock_t start, stop;
+float runtime;
 long long err_cnt = 0;
 
 /*col(locator, 0xff~GF_FIELD-2)-row(mesg, CODEWORD_LEN), same as matlab, contrary to most papers*/
@@ -366,23 +370,27 @@ int tst_vct_form()
 int koetter_interpolation_hermitian()
 {
 	poly_init();
+#if (0 == CFG_RET)	
 	poly_dev_test(recv_poly);
-
+#else
+	poly_dev_test(ret_trans_cwd);
+#endif
+	cnt_switch = 1;
+	start = clock();
 #if (1 == CFG_FAC_FREE)
 	factorization_free();
 	//factorization_recur(min_intp_poly, est_msg_poly);
 #else
-#if 0
-	long long i = 0;
-	for(i = 0; i < KOT_INTP_POLY_NUM; i++)
-	{
-		factorization_recur(intp_poly_coef[i], est_msg_poly);
-		check_result_msg(msg_poly, est_msg_poly);
-	}
-#endif
+#if (1 == CFG_RET)
+	factorization_recur(min_intp_poly, ret_est_msg);
+	ret_cwd_recover();
+#else
 	factorization_recur(min_intp_poly, est_msg_poly);
 #endif	
-	
+#endif
+	stop = clock();
+	runtime = runtime + (stop - start) / 1000.0000;
+	cnt_switch = 0;
 	return 0;
 }
 
