@@ -51,4 +51,6 @@ extern void gf_count_switch(unsigned char count_switch);
 extern void BubbleSort4(float *A, int len, long long *A_idx);
 extern void BubbleSort5(float *A, int len, long long *A_idx);
 extern void gf_count_reset();
+extern long long term_search(long long x_degree, long long y_degree, long long z_degree);
+
 #endif

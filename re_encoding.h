@@ -6,6 +6,7 @@ extern unsigned char ret_poly[MAX_POLY_TERM_SIZE];
 extern unsigned char ret_cwd_poly[CODEWORD_LEN];
 extern unsigned char keep_sym[CODEWORD_LEN];
 extern long long keep_flag[CODEWORD_LEN];
+extern long long keep_cnt;
 extern unsigned char ret_est_msg[MESSAGE_LEN];
 extern unsigned char ret_trans_cwd[CODEWORD_LEN];
 extern unsigned char ret_est_msg[MESSAGE_LEN];
@@ -18,5 +19,7 @@ extern int ret_encoding();
 extern int ret_trans();
 extern int ret_cwd_recover();
 extern int v_poly_construct();
+extern int keep_position_set(long long *keep_poition);
+extern int re_encoding_transform();
 
 #endif

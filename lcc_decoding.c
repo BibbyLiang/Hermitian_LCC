@@ -83,7 +83,7 @@ int chnl_rel_seq_order()
 
 	memcpy(chnl_rel_order, chnl_rel, sizeof(float) * CODEWORD_LEN);
 
-	BubbleSort4(chnl_rel_order, CODEWORD_LEN, chnl_rel_order_idx);
+	BubbleSort4(chnl_rel_order, CODEWORD_LEN, chnl_rel_order_idx);//¿É¿¿¶ÈÉýÐò
 
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
@@ -247,21 +247,22 @@ int chnl_rel_cal(float **input_seq,
             chnl_rel_matrix[j][i] = 0;
         }
     }
-    chnl_rel_matrix[3][5] = 1;
-    chnl_rel_matrix[5][1] = 1;
-    chnl_rel_matrix[0][3] = 1;
+    chnl_rel_matrix[0][5] = 1;
+    chnl_rel_matrix[1][4] = 1;
+    chnl_rel_matrix[1][6] = 1;
+    chnl_rel_matrix[0][0] = 1;
 
-	chnl_rel_matrix[1][6] = 0.9;
-	chnl_rel_matrix[7][6] = 0.1;
+	chnl_rel_matrix[3][2] = 0.9;
+	chnl_rel_matrix[1][2] = 0.1;
 
-	chnl_rel_matrix[3][4] = 0.8;
-	chnl_rel_matrix[5][4] = 0.2;
+	chnl_rel_matrix[3][3] = 0.8;
+	chnl_rel_matrix[1][3] = 0.2;
 
-	chnl_rel_matrix[7][2] = 0.7;
-	chnl_rel_matrix[6][2] = 0.3;
+	chnl_rel_matrix[3][1] = 0.7;
+	chnl_rel_matrix[2][1] = 0.3;
 
-	chnl_rel_matrix[3][0] = 0.6;
-	chnl_rel_matrix[7][0] = 0.4;
+	chnl_rel_matrix[2][7] = 0.6;
+	chnl_rel_matrix[3][7] = 0.4;
 #endif
 
 	chnl_rel_seq_order();
@@ -375,8 +376,6 @@ int koetter_interpolation_hermitian()
 #else
 	poly_dev_test(ret_trans_cwd);
 #endif
-	cnt_switch = 1;
-	start = clock();
 #if (1 == CFG_FAC_FREE)
 	factorization_free();
 	//factorization_recur(min_intp_poly, est_msg_poly);
@@ -388,9 +387,7 @@ int koetter_interpolation_hermitian()
 	factorization_recur(min_intp_poly, est_msg_poly);
 #endif	
 #endif
-	stop = clock();
-	runtime = runtime + (stop - start) / 1000.0000;
-	cnt_switch = 0;
+
 	return 0;
 }
 
@@ -405,7 +402,7 @@ int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd)
 	{
 		if(cwd[i] != est_cwd[i])
 		{
-			DEBUG_IMPOTANT("check_result_cwd: %ld | %x %x\n",
+			DEBUG_IMPORTANT("check_result_cwd: %ld | %x %x\n",
 			               i,
 			               cwd[i],
 			               est_cwd[i]);
@@ -414,7 +411,11 @@ int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd)
 	}
 	if(0 == val)
 	{
-		DEBUG_IMPOTANT("cwd_ok\n");
+		DEBUG_IMPORTANT("cwd_ok\n");
+		if(GF_Q > min_intp_idx)
+		{
+			DEBUG_SYS("min_intp_idx: %ld\n", min_intp_idx);
+		}
 	}
 	else
 	{
@@ -430,7 +431,7 @@ int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd)
 		}
 		if(cwd_err > radius)
 		{
-			DEBUG_IMPOTANT("err_out_of_radius_cwd: %ld %ld %ld\n",
+			DEBUG_IMPORTANT("err_out_of_radius_cwd: %ld %ld %ld\n",
 			          	   cwd_err,
 			          	   radius,
 			          	   val);
@@ -506,7 +507,7 @@ int check_result_msg(unsigned char *msg, unsigned char *est_msg)
 	{
 		if(msg[i] != est_msg[i])
 		{
-			DEBUG_IMPOTANT("check_result_msg: %ld | %x %x\n",
+			DEBUG_IMPORTANT("check_result_msg: %ld | %x %x\n",
 			               i,
 			               msg[i],
 			               est_msg[i]);
@@ -515,7 +516,11 @@ int check_result_msg(unsigned char *msg, unsigned char *est_msg)
 	}
 	if(0 == val)
 	{
-		DEBUG_IMPOTANT("msg_ok\n");
+		DEBUG_IMPORTANT("msg_ok\n");
+		if(GF_Q > min_intp_idx)
+		{
+			DEBUG_SYS("min_intp_idx: %ld\n", min_intp_idx);
+		}
 	}
 	else
 	{
@@ -531,7 +536,7 @@ int check_result_msg(unsigned char *msg, unsigned char *est_msg)
 		}
 		if(cwd_err > radius)
 		{
-			DEBUG_IMPOTANT("err_out_of_radius_msg: %ld %ld %ld\n",
+			DEBUG_IMPORTANT("err_out_of_radius_msg: %ld %ld %ld\n",
 			               cwd_err,
 			          	   radius,
 			          	   val);

@@ -192,11 +192,11 @@ int rnd_msg_gen()
 
 #if 0//(1 == TEST_MODE)
 	memset(msg_poly, 0xFF, sizeof(unsigned char) * MESSAGE_LEN);
-	msg_poly[0] = 0x0;
-	msg_poly[1] = 0x2;
-	msg_poly[2] = 0x0;
-	msg_poly[3] = 0x2;
-	msg_poly[4] = 0x2;
+	msg_poly[0] = 0xFF;
+	msg_poly[1] = 0x0;
+	msg_poly[2] = 0x1;
+	msg_poly[3] = 0x1;
+	msg_poly[4] = 0x1;
 	for(i = 0; i < MESSAGE_LEN; i++)
 	{
 		DEBUG_NOTICE("test_msg_poly: %ld | %x\n",
@@ -271,6 +271,7 @@ int her_convert(unsigned char *poly)
 			/*x^(w + 1) = y^w + y*/
 			if(0 != degree_over_flag)
 			{
+#if (0 == CFG_QUICK_POLY_SEARCH)
 				for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
 				{
 					if(((x_term_degree_table[i] - GF_Q - 1) == x_term_degree_table[j])
@@ -286,6 +287,13 @@ int her_convert(unsigned char *poly)
 						poly[j] = gf_add(poly_tmp[i], poly[j]);
 					}
 				}
+#else
+				j = term_search((x_term_degree_table[i] - GF_Q - 1), (GF_Q + y_term_degree_table[i]), z_term_degree_table[i]);
+				poly[j] = gf_add(poly_tmp[i], poly[j]);
+
+				j = term_search((x_term_degree_table[i] - GF_Q - 1), (1 + y_term_degree_table[i]), z_term_degree_table[i]);
+				poly[j] = gf_add(poly_tmp[i], poly[j]);
+#endif
 				/*clear this over-degree term*/
 				poly[i] = 0xFF;
 				convert_flag++;

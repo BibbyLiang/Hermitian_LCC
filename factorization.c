@@ -31,7 +31,7 @@ int g_poly_trans(unsigned char *poly, unsigned char *g_poly, long long pole_idx,
 		{
 			pole_x_degree = pole_basis_pow[pole_idx][0] * z_degree + x_term_degree_table[i];
 			pole_y_degree = pole_basis_pow[pole_idx][1] * z_degree + y_term_degree_table[i];
-		
+#if (0 == CFG_QUICK_POLY_SEARCH)		
 			for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
 			{
 				if((pole_x_degree == x_term_degree_table[j])
@@ -42,6 +42,10 @@ int g_poly_trans(unsigned char *poly, unsigned char *g_poly, long long pole_idx,
 			        break;     		 
 				}
 			}
+#else
+			j = term_search(pole_x_degree, pole_y_degree, 0);
+			g_poly[j] = poly[i];
+#endif
 
 			poly[i] = 0xFF;
 		}
@@ -190,7 +194,7 @@ int recur_poly_update(unsigned char *poly, long long pole_idx, unsigned char roo
 						 pole_basis_pow[pole_idx][1],
 			             x_degree,
 			             y_degree);
-
+#if (0 == CFG_QUICK_POLY_SEARCH)
 			for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
 			{
 				if((x_degree == x_term_degree_table[j])
@@ -202,6 +206,12 @@ int recur_poly_update(unsigned char *poly, long long pole_idx, unsigned char roo
 					poly[j] = gf_add(poly[j], tmp_val);
 				}
 			}
+#else
+			j = term_search(x_degree, y_degree, 0);
+			tmp_val = gf_multp(root_prev_coef, poly[i]);
+			/*notice that it should be an addition operation*/
+			poly[j] = gf_add(poly[j], tmp_val);
+#endif
 		}
 	}
 
@@ -470,7 +480,7 @@ int factorization_free()
 			}
 		}
 
-		DEBUG_IMPOTANT("dev_to_cnt: %ld\n", dev_to_cnt);
+		DEBUG_IMPORTANT("dev_to_cnt: %ld\n", dev_to_cnt);
 		fac_her_lagrange_poly_construct();
 		fac_ret_poly_construct();
 		fac_ret_encoding();

@@ -18,6 +18,7 @@ void init_simulation()
 	init_genrand((long)(time(NULL)));
 
 	runtime = 0;
+	err_cnt = 0;
 
 	DEBUG_SYS("init_simulation OK\n");
 
@@ -34,6 +35,10 @@ void main()
 	mod_init();
 	tst_vct_num_cal();
 	tst_vct_init();
+	
+	affine_points_cal();
+	term_degree_table_init();
+	pole_basis_cal();
 
 	for(i = 0; i < sim_cnt; i++)
 	{
@@ -41,31 +46,26 @@ void main()
 		{
 			DEBUG_SYS("sim: %ld / %ld, err: %ld\n", i, sim_cnt, err_cnt);
 		}
-	
-		affine_points_cal();
-		term_degree_table_init();
-		pole_basis_cal();
+
 		rnd_msg_gen();
 		her_encoding(msg_poly, cwd_poly);
 		trans_over_chnl();
 		chnl_rel_cal(recv_seq, symbol_num);
 
+		cnt_switch = 1;
+		start = clock();
+
 #if (1 == CFG_RET)
-		/*test*/
-		her_lagrange_poly_construct();
-		ret_poly_construct();
-		ret_encoding();
-		ret_trans();
-		v_poly_construct();
+		re_encoding_transform();
 #endif		
 
 		tst_vct_form();
 
-		//cnt_switch = 1;
-
 		koetter_interpolation_hermitian();
 
-		//cnt_switch = 0;
+		stop = clock();
+		runtime = runtime + (stop - start) / 1000.0000;
+		cnt_switch = 0;
 
 #if (1 == CFG_FAC_FREE)
 		check_result_cwd(cwd_poly, est_cwd_poly);

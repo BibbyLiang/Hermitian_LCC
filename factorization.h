@@ -3,6 +3,12 @@
 
 #include "cfg_decoding.h"
 
+
+extern unsigned char erasure_flag[CODEWORD_LEN];
+extern unsigned char dev_to_flag[CODEWORD_LEN];
+extern unsigned char store_q0_dev[MAX_POLY_TERM_SIZE];
+extern unsigned char store_q1_dev[MAX_POLY_TERM_SIZE];
+
 extern int g_poly_trans(unsigned char *poly, unsigned char *g_poly, long long pole_idx, long long z_degree);
 extern long long lt_get(unsigned char *poly);
 extern long long chien_search_x_y(unsigned char *poly);

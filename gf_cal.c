@@ -1017,3 +1017,15 @@ void BubbleSort5(float *A, int len, long long *A_idx)
         low++;            // 修改low值,后移一位
     }
 }
+
+long long term_search(long long x_degree, long long y_degree, long long z_degree)
+{
+	long long i = 0;
+	long long val = 0;
+
+	val = x_degree * (Y_MAX_SIZE * Z_MAX_SIZE)
+	    + y_degree * Z_MAX_SIZE
+	    + z_degree;
+
+	return val;
+}

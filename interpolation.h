@@ -12,7 +12,10 @@ extern unsigned char intp_poly_tmp[KOT_INTP_POLY_NUM][MAX_POLY_TERM_SIZE];
 extern unsigned char q0_poly_coef[MAX_POLY_TERM_SIZE], q1_poly_coef[MAX_POLY_TERM_SIZE];
 extern unsigned char intp_poly_degree[KOT_INTP_POLY_NUM];
 extern unsigned char min_intp_poly[MAX_POLY_TERM_SIZE];
+extern long long min_intp_idx;
 
+extern int poly_add(unsigned char *a_poly, unsigned char *b_poly, unsigned char *sum_poly);
+extern int poly_mul(unsigned char *a_poly, unsigned char *b_poly, unsigned char *prod_poly);
 extern unsigned char poly_eva_x_y(unsigned char *poly_x_y, unsigned char x_val, unsigned char y_val);
 extern int term_degree_table_init();
 extern long long poly_degree_cal(unsigned char *poly);
