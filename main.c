@@ -28,7 +28,7 @@ void init_simulation()
 void main()
 {
 	long long i = 0;
-	long long sim_cnt = 100, monitor_cnt = 1;
+	long long sim_cnt = 10000, monitor_cnt = 100;
 
 	init_simulation();
 
@@ -39,12 +39,18 @@ void main()
 	affine_points_cal();
 	term_degree_table_init();
 	pole_basis_cal();
+#if (1 == CFG_FAST_RET)	
+	ret_t_val_cal();
+#endif	
 
 	for(i = 0; i < sim_cnt; i++)
 	{
-		if(0 == (i % monitor_cnt))
+		if((0 == (i % monitor_cnt))
+			&& (0 != i))
 		{
 			DEBUG_SYS("sim: %ld / %ld, err: %ld\n", i, sim_cnt, err_cnt);
+			DEBUG_SYS("Decoding Complexity: %f %f\n", (float)(add_cnt / i), (float)(mul_cnt / i));
+			DEBUG_SYS("Decoding Measured Time: %f\n", runtime / ((float)i));
 		}
 
 		rnd_msg_gen();

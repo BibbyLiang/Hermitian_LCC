@@ -116,7 +116,7 @@ int poly_mul(unsigned char *a_poly, unsigned char *b_poly, unsigned char *prod_p
 	}
 
 	her_convert(prod_poly);
-
+#if (1 == TEST_MODE)
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
 	{
 		if(0xFF != prod_poly[i])
@@ -128,7 +128,7 @@ int poly_mul(unsigned char *a_poly, unsigned char *b_poly, unsigned char *prod_p
 			             prod_poly[i]);
 		}
 	}
-
+#endif
 	return 0;
 }
 
@@ -413,6 +413,7 @@ int poly_q0q1_get(long long poly_idx)
 			q0_poly_coef[i] = intp_poly_coef[poly_idx][i];
 		}
 	}
+#if (1 == TEST_MODE)	
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
 	{
 		if(0xFF != q0_poly_coef[i])
@@ -435,7 +436,7 @@ int poly_q0q1_get(long long poly_idx)
 				         q1_poly_coef[i]);
 		}
 	}
-
+#endif
 	return 0;
 }
 
@@ -538,7 +539,7 @@ int poly_min_update(unsigned char *poly_tmp, unsigned char *poly_min, unsigned c
 		{
 			poly_tmp[i] = gf_add(x_up_poly_min[i], poly_min_val);
 		}
-		
+#if (1 == TEST_MODE)		
 		if(0xFF != poly_tmp[i])
 		{
 			/*is it different form the TCOM papaer?*/
@@ -551,6 +552,7 @@ int poly_min_update(unsigned char *poly_tmp, unsigned char *poly_min, unsigned c
 			             x_up_poly_min[i],
 			             poly_tmp[i]);
 		}
+#endif		
 	}
 
 	return 0;
@@ -718,6 +720,7 @@ int poly_dev_test(unsigned char *test_poly_seq)
 	poly_q0q1_get(min_idx);
 	min_intp_idx = min_idx;
 
+#if (0 == CFG_FAC_FREE)
 #if (1 == CFG_RET)
 	unsigned char tmp_poly[MAX_POLY_TERM_SIZE];
 	memset(tmp_poly, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
@@ -747,7 +750,8 @@ int poly_dev_test(unsigned char *test_poly_seq)
 		}
 	}
 #endif
-
+#endif
+#if (1 == TEST_MODE)
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
 	{
 		if(0xFF != min_intp_poly[i])
@@ -760,7 +764,7 @@ int poly_dev_test(unsigned char *test_poly_seq)
 			             min_intp_poly[i]);
 		}
 	}
-
+#endif
 #if 0
 	long long zero_root_cnt = 0;
 	unsigned char q1_eva_val = 0xFF;

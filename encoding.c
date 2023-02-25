@@ -192,9 +192,18 @@ int rnd_msg_gen()
 
 #if 0//(1 == TEST_MODE)
 	memset(msg_poly, 0xFF, sizeof(unsigned char) * MESSAGE_LEN);
-	msg_poly[0] = 0xFF;
-	msg_poly[1] = 0x0;
-	msg_poly[2] = 0x1;
+	for(i = 0; i < MESSAGE_LEN; i++)
+	{
+		DEBUG_NOTICE("test_msg_poly: %ld | %x\n",
+		             i,
+		             msg_poly[i]);
+	}
+#endif
+#if 0//(1 == TEST_MODE)
+	memset(msg_poly, 0xFF, sizeof(unsigned char) * MESSAGE_LEN);
+	msg_poly[0] = 0x1;
+	msg_poly[1] = 0x1;
+	msg_poly[2] = 0x2;
 	msg_poly[3] = 0x1;
 	msg_poly[4] = 0x1;
 	for(i = 0; i < MESSAGE_LEN; i++)
@@ -300,7 +309,7 @@ int her_convert(unsigned char *poly)
 			}
 		}
 	}
-#if 1
+#if 0
 	if(0 != convert_flag)
 	{
 		DEBUG_NOTICE("convert_flag: %ld\n", convert_flag);

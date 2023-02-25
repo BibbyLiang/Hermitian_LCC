@@ -12,7 +12,7 @@
 #endif
 #if (4 == GF_Q)
 #define GF_FIELD        16
-#define MESSAGE_LEN     42
+#define MESSAGE_LEN     39
 #endif
 #if (6 == GF_Q)
 #define GF_FIELD        64
@@ -47,9 +47,10 @@
 #define CFG_QUICK_POLY_SEARCH	1
 #define KOT_INTP_POLY_NUM	(2 * GF_Q)
 
-#define CFG_FAC_FREE	 0
+#define CFG_FAC_FREE	 1
 #define CFG_STORE_DEV	 1
 
-#define CFG_RET			 0
+#define CFG_RET			 1
+#define CFG_FAST_RET	 1
 
 #endif

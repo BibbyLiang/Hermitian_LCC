@@ -17,6 +17,7 @@ unsigned char dev_to_flag[CODEWORD_LEN];
 
 unsigned char store_q0_dev[MAX_POLY_TERM_SIZE];
 unsigned char store_q1_dev[MAX_POLY_TERM_SIZE];
+unsigned char store_v_dev[MAX_POLY_TERM_SIZE];
 
 int g_poly_trans(unsigned char *poly, unsigned char *g_poly, long long pole_idx, long long z_degree)
 {
@@ -55,7 +56,7 @@ int g_poly_trans(unsigned char *poly, unsigned char *g_poly, long long pole_idx,
 	her_convert(poly);
 	her_convert(g_poly);
 	//cnt_switch = 1;
-
+#if (1 == TEST_MODE)
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
 	{
 		if(0xFF != g_poly[i])
@@ -78,7 +79,7 @@ int g_poly_trans(unsigned char *poly, unsigned char *g_poly, long long pole_idx,
 			             poly[i]);
 		}
 	}
-
+#endif
 	return 0;
 }
 
@@ -218,7 +219,7 @@ int recur_poly_update(unsigned char *poly, long long pole_idx, unsigned char roo
 	//cnt_switch = 0;
 	her_convert(poly);
 	//cnt_switch = 1;
-
+#if (1 == TEST_MODE)
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
 	{
 		if(0xFF != poly[i])
@@ -230,7 +231,7 @@ int recur_poly_update(unsigned char *poly, long long pole_idx, unsigned char roo
 			             poly[i]);
 		}
 	}
-
+#endif
 	return 0;
 }
 
@@ -311,7 +312,7 @@ int poly_dev_cal(unsigned char *poly, unsigned char *x_dev_poly, unsigned char *
 			y_dev_poly[j] = poly[i];
 		}
 	}
-	
+#if (1 == TEST_MODE)
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
 	{
 		if(0xFF != x_dev_poly[i])
@@ -334,7 +335,7 @@ int poly_dev_cal(unsigned char *poly, unsigned char *x_dev_poly, unsigned char *
 			             y_dev_poly[i]);
 		}
 	}
-	
+#endif
 	return 0;
 }
 
@@ -595,6 +596,8 @@ int poly_dev_build(unsigned char *poly, unsigned char *poly_dev)
 		}
 	}
 
+	her_convert(poly_dev);
+#if (1 == TEST_MODE)
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
 	{
 		if(0xFF != poly_dev[i])
@@ -606,7 +609,7 @@ int poly_dev_build(unsigned char *poly, unsigned char *poly_dev)
 			              poly_dev[i]);
 		}
 	}
-
+#endif
 	return 0;
 }
 
@@ -820,6 +823,7 @@ int fac_her_lagrange_poly_construct()
 		//cnt_switch = 0;
 		her_convert(lag_poly[i]);
 		//cnt_switch = 1;
+#if (1 == TEST_MODE)
 		for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
 		{
 			if(0xFF != lag_poly[i][j])
@@ -832,6 +836,7 @@ int fac_her_lagrange_poly_construct()
 				              lag_poly[i][j]);
 			}
 		}
+#endif		
 #if 0
 		check_val = poly_eva_x_y(lag_poly[i], af_pnt[i][0], af_pnt[i][1]);
 		DEBUG_NOTICE("check_val: %ld | %x %x | %x\n", i, af_pnt[i][0], af_pnt[i][1], check_val);
@@ -847,9 +852,11 @@ int fac_ret_poly_construct()
 	unsigned char tmp_poly[MAX_POLY_TERM_SIZE];
 	memset(tmp_poly, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
 	memset(ret_poly, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
-
+#if (0 == CFG_RET)
 	memcpy(keep_sym, est_cwd_poly, sizeof(unsigned char) * CODEWORD_LEN);
-
+#else
+	memcpy(keep_sym, ret_est_cwd, sizeof(unsigned char) * CODEWORD_LEN);
+#endif
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
 		if(1 == erasure_flag[i])
@@ -881,7 +888,7 @@ int fac_ret_poly_construct()
 			}
 		}
 	}
-
+#if (1 == TEST_MODE)
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
 	{
 		if(0xFF != ret_poly[i])
@@ -893,7 +900,7 @@ int fac_ret_poly_construct()
 			              ret_poly[i]);
 		}
 	}
-
+#endif
 	return 0;
 }
 
@@ -902,22 +909,30 @@ int fac_ret_encoding()
 	long long i = 0, j = 0, k = 0;
 	unsigned char x_val = 0xFF, y_val = 0xFF;;
 	unsigned char val = 0xFF;
-
+#if (0 == CFG_RET)
 	memset(ret_cwd_poly, 0xFF, sizeof(unsigned char) * CODEWORD_LEN);
-
+#endif
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
 		if(0 == dev_to_flag[i])
 		{
+#if (0 == CFG_RET)
 			ret_cwd_poly[i] = est_cwd_poly[i];
+#else
+			ret_est_cwd[i] = ret_est_cwd[i];
+#endif
 		}
 		else
 		{
+#if (0 == CFG_RET)		
 			ret_cwd_poly[i] = poly_eva_x_y(ret_poly, af_pnt[i][0], af_pnt[i][1]);
+#else
+			ret_est_cwd[i] = poly_eva_x_y(ret_poly, af_pnt[i][0], af_pnt[i][1]);
+#endif
 			DEBUG_NOTICE("ret_cwd_poly: %ld | %x %x %x\n",
 			             i,
 			             cwd_poly[i],
-			             est_cwd_poly[i],
+			             ret_est_cwd[i],
 			             ret_cwd_poly[i]);
 		}             
 	}
@@ -943,8 +958,10 @@ int fac_ret_encoding()
 		}
 	}
 #endif
+#if (0 == CFG_RET)
+	//memcpy(ret_est_cwd, ret_cwd_poly, sizeof(unsigned char) * CODEWORD_LEN);
 	memcpy(est_cwd_poly, ret_cwd_poly, sizeof(unsigned char) * CODEWORD_LEN);
-
+#endif
 	return 0;
 }
 
@@ -952,9 +969,11 @@ int fac_dev_init()
 {
 	memset(store_q0_dev, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
 	memset(store_q1_dev, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+	memset(store_v_dev, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
 
 	poly_dev_build(q0_poly_coef, store_q0_dev);
 	poly_dev_build(q1_poly_coef, store_q1_dev);
+	poly_dev_build(v_poly, store_v_dev);
 
 	return 0;
 }

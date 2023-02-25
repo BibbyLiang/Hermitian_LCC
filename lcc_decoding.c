@@ -84,7 +84,7 @@ int chnl_rel_seq_order()
 	memcpy(chnl_rel_order, chnl_rel, sizeof(float) * CODEWORD_LEN);
 
 	BubbleSort4(chnl_rel_order, CODEWORD_LEN, chnl_rel_order_idx);//¿É¿¿¶ÈÉýÐò
-
+#if (1 == TEST_MODE)
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
 		DEBUG_NOTICE("chnl_rel_order_idx: %ld %f %ld\n",
@@ -92,7 +92,7 @@ int chnl_rel_seq_order()
 					 chnl_rel_order[i],
 		             chnl_rel_order_idx[i]);
 	}
-
+#endif
 	return 0;
 }
 
@@ -247,22 +247,22 @@ int chnl_rel_cal(float **input_seq,
             chnl_rel_matrix[j][i] = 0;
         }
     }
-    chnl_rel_matrix[0][5] = 1;
-    chnl_rel_matrix[1][4] = 1;
-    chnl_rel_matrix[1][6] = 1;
-    chnl_rel_matrix[0][0] = 1;
+    chnl_rel_matrix[1][1] = 1;
+    chnl_rel_matrix[1][7] = 1;
+    chnl_rel_matrix[3][6] = 1;
+    chnl_rel_matrix[2][0] = 1;
 
-	chnl_rel_matrix[3][2] = 0.9;
-	chnl_rel_matrix[1][2] = 0.1;
+	chnl_rel_matrix[0][5] = 0.9;
+	chnl_rel_matrix[1][5] = 0.1;
 
-	chnl_rel_matrix[3][3] = 0.8;
-	chnl_rel_matrix[1][3] = 0.2;
+	chnl_rel_matrix[2][2] = 0.8;
+	chnl_rel_matrix[0][2] = 0.2;
 
-	chnl_rel_matrix[3][1] = 0.7;
-	chnl_rel_matrix[2][1] = 0.3;
+	chnl_rel_matrix[1][3] = 0.7;
+	chnl_rel_matrix[0][3] = 0.3;
 
-	chnl_rel_matrix[2][7] = 0.6;
-	chnl_rel_matrix[3][7] = 0.4;
+	chnl_rel_matrix[0][4] = 0.6;
+	chnl_rel_matrix[2][4] = 0.4;
 #endif
 
 	chnl_rel_seq_order();
@@ -377,8 +377,12 @@ int koetter_interpolation_hermitian()
 	poly_dev_test(ret_trans_cwd);
 #endif
 #if (1 == CFG_FAC_FREE)
+#if (1 == CFG_RET)
+	ret_fac_free(q0_poly_coef, q1_poly_coef, v_poly);
+	ret_cwd_recover();
+#else
 	factorization_free();
-	//factorization_recur(min_intp_poly, est_msg_poly);
+#endif
 #else
 #if (1 == CFG_RET)
 	factorization_recur(min_intp_poly, ret_est_msg);

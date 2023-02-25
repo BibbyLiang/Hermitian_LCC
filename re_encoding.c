@@ -8,6 +8,7 @@
 #include "channel.h"
 #include "interpolation.h"
 #include "factorization.h"
+#include "re_encoding.h"
 #include "lcc_decoding.h"
 
 unsigned char lag_poly[CODEWORD_LEN][MAX_POLY_TERM_SIZE];
@@ -21,6 +22,7 @@ unsigned char ret_est_msg[MESSAGE_LEN];
 unsigned char ret_est_cwd[CODEWORD_LEN];
 unsigned char v_poly[MAX_POLY_TERM_SIZE];
 unsigned char v_val[CODEWORD_LEN];
+unsigned char t_val[GF_FIELD][GF_FIELD][GF_FIELD];
 
 int her_lagrange_poly_construct()
 {
@@ -332,7 +334,7 @@ int her_lagrange_poly_construct()
 		}
 		
 		her_convert(lag_poly[i]);
-		
+#if (1 == TEST_MODE)
 		for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
 		{
 			if(0xFF != lag_poly[i][j])
@@ -345,6 +347,7 @@ int her_lagrange_poly_construct()
 				              lag_poly[i][j]);
 			}
 		}
+#endif		
 	}
 
 	return 0;
@@ -386,7 +389,7 @@ int ret_poly_construct()
 			}
 		}
 	}
-
+#if (1 == TEST_MODE)
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
 	{
 		if(0xFF != ret_poly[i])
@@ -398,7 +401,7 @@ int ret_poly_construct()
 			              ret_poly[i]);
 		}
 	}
-
+#endif
 	return 0;
 }
 
@@ -412,14 +415,21 @@ int ret_encoding()
 	
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
-		ret_cwd_poly[i] = poly_eva_x_y(ret_poly, af_pnt[i][0], af_pnt[i][1]);
+		if(1 == keep_flag[i])
+		{
+			ret_cwd_poly[i] = recv_poly[i];
+		}
+		else
+		{
+			ret_cwd_poly[i] = poly_eva_x_y(ret_poly, af_pnt[i][0], af_pnt[i][1]);
+		}
 		DEBUG_NOTICE("ret_cwd_poly: %ld | %x\n",
 		             i,
 		             ret_cwd_poly[i]);
 	}
 	
 	/*check ret-cwd*/
-#if 0	
+#if (1 == TEST_MODE)
 	for(i = 0; i < GF_FIELD; i++)
 	{
 		for(j = 0; j < GF_FIELD; j++)
@@ -449,8 +459,15 @@ int ret_trans()
 
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
-		ret_trans_cwd[i] = gf_add(recv_poly[i], ret_cwd_poly[i]);
-		ret_trans_cwd[i] = gf_div(ret_trans_cwd[i], v_val[i]);
+		if(1 == keep_flag[i])
+		{
+			ret_trans_cwd[i] = 0xFF;
+		}
+		else
+		{
+			ret_trans_cwd[i] = gf_add(recv_poly[i], ret_cwd_poly[i]);
+			ret_trans_cwd[i] = gf_div(ret_trans_cwd[i], v_val[i]);
+		}
 		DEBUG_NOTICE("ret_trans_cwd: %ld | %x %x | %x\n",
 		             i,
 		             recv_poly[i],
@@ -465,8 +482,10 @@ int ret_cwd_recover()
 {
 	long long i = 0;
 
+#if (0 == CFG_FAC_FREE)
 	memset(ret_est_cwd, 0xFF, sizeof(unsigned char) * CODEWORD_LEN);
 	her_encoding(ret_est_msg, ret_est_cwd);
+#endif
 
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
@@ -559,6 +578,8 @@ int v_poly_construct()
 		}
 	}
 
+	her_convert(v_poly);
+
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
 	{
 		if(0xFF != v_poly[i])
@@ -620,7 +641,7 @@ int keep_position_set(long long *keep_poition)
 			{
 				if((af_pnt[j][0] == power_polynomial_table[i][0])
 					//&& ((MESSAGE_LEN / GF_Q * GF_Q) > keep_cnt))
-					&& (36 > keep_cnt))//?
+					&& (((MESSAGE_LEN - (GF_Q) * (GF_Q - 1) / 2) / GF_Q * GF_Q) > keep_cnt))//?
 				{
 					keep_poition[j] = 1;
 					keep_cnt++;
@@ -637,30 +658,57 @@ int keep_position_set(long long *keep_poition)
 	keep_poition[5] = 1;
 	keep_cnt = 4;
 #endif	
-
+#if (1 == TEST_MODE)
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
 		DEBUG_NOTICE("keep_poition: %ld | %ld\n", i, keep_poition[i]);
 	}
-
+#endif
 	return 0;
 }
 
-unsigned char ret_fac_free_dev(unsigned char dev_flag)
+unsigned char ret_fac_free_dev(long long sym_idx, unsigned char dev_flag, unsigned char dev_poly_v)
 {
-	long long i = 0, j = 0;
 	long long dev_cnt = 0;
-	unsigned char q0_val = 0xFF, q1_val = 0xFF;
+	unsigned char q0_val = 0xFF, q1_val = 0xFF, v_val = 0xFF;;
 	unsigned char val = 0xFF;
-
-	memset(erasure_flag, 0, sizeof(unsigned char) * CODEWORD_LEN);
 
 	if(0 == dev_flag)
 	{
 		fac_dev_init();
 	}
-	q0_val = poly_eva_x_y(store_q0_dev, af_pnt[i][0], af_pnt[i][1]);
-	q1_val = poly_eva_x_y(store_q1_dev, af_pnt[i][0], af_pnt[i][1]);
+
+	q1_val = poly_eva_x_y(store_q1_dev, af_pnt[sym_idx][0], af_pnt[sym_idx][1]);
+	DEBUG_NOTICE("dev_q1_val_cal: %x\n", q1_val);
+
+	if(0xFF != q1_val)//notice this
+	{
+		if(0 == dev_poly_v)
+		{
+			q0_val = poly_eva_x_y(store_q0_dev, af_pnt[sym_idx][0], af_pnt[sym_idx][1]);
+			val = gf_div(q0_val, q1_val);
+		}
+		else
+		{
+			v_val = poly_eva_x_y(store_v_dev, af_pnt[sym_idx][0], af_pnt[sym_idx][1]);
+			val = gf_div(v_val, q1_val);
+		}
+	}
+	else
+	{
+		erasure_flag[sym_idx] = 1;
+		dev_to_flag[sym_idx] = 1;
+	}
+
+	DEBUG_NOTICE("ret_fac_free_dev: %ld  %ld | %d %d | %x %x %x | %x\n",
+	             sym_idx,
+	             dev_flag,
+	             dev_poly_v,
+	             erasure_flag[sym_idx],
+	             q0_val,
+	             q1_val,
+	             v_val,
+	             val);
 
 	return val;
 }
@@ -669,6 +717,12 @@ int ret_fac_free(unsigned char *q0_poly, unsigned char *q1_poly, unsigned char *
 {
 	long long i = 0, j = 0;
 	unsigned char q0_val = 0xFF, q1_val = 0xFF;
+	unsigned char dev_init_flag = 0;
+	long long erasure_keep_cnt = 0;
+	memset(erasure_flag, 0, sizeof(unsigned char) * CODEWORD_LEN);
+	memset(dev_to_flag, 0, sizeof(unsigned char) * CODEWORD_LEN);
+	dev_to_cnt = 0;
+	keep_cnt = 0;
 
 	unsigned char q0_all_zero = 1;
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
@@ -681,7 +735,8 @@ int ret_fac_free(unsigned char *q0_poly, unsigned char *q1_poly, unsigned char *
 	}
 	if(1 == q0_all_zero)
 	{
-		memcpy(ret_est_cwd, ret_poly, sizeof(unsigned char) * CODEWORD_LEN);
+		//memcpy(ret_est_cwd, ret_cwd_poly, sizeof(unsigned char) * CODEWORD_LEN);
+		memset(ret_est_cwd, 0xFF, sizeof(unsigned char) * CODEWORD_LEN);
 
 		return 2;
 	}
@@ -714,7 +769,10 @@ int ret_fac_free(unsigned char *q0_poly, unsigned char *q1_poly, unsigned char *
 		{
 			if(0xFF == v_val[i])
 			{
-			
+				ret_est_cwd[i] = ret_fac_free_dev(i, dev_init_flag, 1);
+				q0_val = poly_eva_x_y(q0_poly, af_pnt[i][0], af_pnt[i][1]);
+				ret_est_cwd[i] = gf_multp(ret_est_cwd[i], q0_val);
+				dev_init_flag = 1;
 			}
 			else
 			{
@@ -727,9 +785,460 @@ int ret_fac_free(unsigned char *q0_poly, unsigned char *q1_poly, unsigned char *
 				}
 				else
 				{
+					ret_est_cwd[i] = ret_fac_free_dev(i, dev_init_flag, 0);
+					ret_est_cwd[i] = gf_multp(ret_est_cwd[i], v_val[i]);
+					dev_init_flag = 1;
+				}
+			}
+
+			if(1 == erasure_flag[i])
+			{
+				dev_to_cnt++;
+			}
+		}
+		
+		DEBUG_NOTICE("ret_fac_free_cal: %ld | %d | %x %x %x | %x\n",
+				     i,
+				     erasure_flag[i],
+				     q0_val,
+				     q1_val,
+				     v_val[i],
+				     ret_est_cwd[i]);
+#if (1 == TEST_MODE)
+		for(j = 0; j < CODEWORD_LEN; j++)
+		{
+			if(1 == erasure_flag[j])
+			{
+				DEBUG_IMPORTANT("erasure_flag_check: %d %ld\n", j, dev_to_cnt);
+			}
+		}
+#endif		
+	}
+
+	if(0 != dev_to_cnt)
+	{
+		for(i = 0; i < CODEWORD_LEN; i++)
+		{
+			if(1 == erasure_flag[i])
+			{
+				DEBUG_IMPORTANT("erasure_flag_find: %ld\n", i);
+				for(j = 0; j < CODEWORD_LEN; j++)
+				{
+					if(af_pnt[i][0] == af_pnt[j][0])
+					{
+						erasure_flag[j] = 1;
+						DEBUG_IMPORTANT("erasure_flag_set: %ld\n", j);
+					}
 				}
 			}
 		}
+#if 0//test for erasure decoding
+		for(i = 0; i < CODEWORD_LEN; i++)
+		{
+			if(0xFF == af_pnt[i][0])
+			{
+				if(1 >= dev_to_cnt)
+				{
+					erasure_flag[i] = 1;
+					dev_to_flag[i] = 1;
+				}
+			}
+			if(0x0 == af_pnt[i][0])
+			{
+				//erasure_flag[i] = 1;
+			}
+			if(0x1 == af_pnt[i][0])
+			{
+				//erasure_flag[i] = 1;
+			}
+			if(0x2 == af_pnt[i][0])
+			{
+				//erasure_flag[i] = 1;
+			}
+			if(0x3 == af_pnt[i][0])
+			{
+				//erasure_flag[i] = 1;
+			}
+			if(0x4 == af_pnt[i][0])
+			{
+				//erasure_flag[i] = 1;
+			}
+		}
+#endif
+		DEBUG_IMPORTANT("dev_to_cnt: %ld\n", dev_to_cnt);
+#if (0 == CFG_FAST_RET)			
+		fac_her_lagrange_poly_construct();
+		fac_ret_poly_construct();
+		fac_ret_encoding();
+#else
+		era_cwd_gen();
+#endif
+	}
+
+	return 0;
+}
+
+int ret_t_val_cal()
+{
+	long long i = 0, j = 0, k = 0;
+	unsigned char up_val = 0xFF, down_val = 0xFF;
+
+	/*clear*/
+	for(i = 0; i < GF_FIELD; i++)
+	{
+		for(j = 0; j < GF_FIELD; j++)
+		{
+			memset(t_val[i][j], 0xFF, sizeof(unsigned char) * GF_FIELD);
+		}
+	}
+
+	for(i = 0; i < GF_FIELD; i++)
+	{
+		for(j = 0; j < GF_FIELD; j++)
+		{
+			down_val = gf_add(power_polynomial_table[j][0], power_polynomial_table[i][0]);
+			if(0xFF != down_val)
+			{
+				for(k = 0; k < GF_FIELD; k++)
+				{
+					up_val = gf_add(power_polynomial_table[i][0], power_polynomial_table[k][0]);
+					t_val[i][j][k] = gf_div(up_val, down_val);
+					DEBUG_NOTICE("t_val: %ld %ld %ld | %x\n",
+					             i,
+					             j,
+					             k,
+					             t_val[i][j][k]);
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+int ret_cwd_gen()
+{
+	long long i = 0, j = 0, k = 0, l = 0, m = 0;
+	long long k_idx = 0;
+	unsigned char l_val = 0x0, r_val = 0xFF;
+	unsigned char y_her_curve_find_flag = 0;
+	unsigned char x_i_sel_flag = 0, y_i_sel_flag = 0;
+	unsigned char x_j_sel_flag = 0, y_j_sel_flag = 0;
+	unsigned char tmp_val = 0xFF;
+
+	for(k = 0; k < CODEWORD_LEN; k++)
+	{
+		if(1 == keep_flag[k])
+		{
+			ret_cwd_poly[k] = recv_poly[k];
+			continue;
+		}
+	
+		r_val = 0xFF;
+		for(m = 0; m < CODEWORD_LEN; m++)
+		{
+			if(0 == keep_flag[m])
+			{
+				continue;
+			}
+			l_val = 0x0;
+			x_j_sel_flag = 0;
+			y_j_sel_flag = 0;
+			for(j = 0; j < GF_FIELD; j++)
+			{
+				if((1 == x_j_sel_flag)
+					&& (1 == y_j_sel_flag))
+				{
+					break;
+				}
+
+				if(af_pnt[m][0] == power_polynomial_table[j][0])
+				{
+					x_j_sel_flag = 1;
+					for(i = 0; i < GF_FIELD; i++)
+					{
+						x_i_sel_flag = 0;
+						for(l = 0; l < CODEWORD_LEN; l++)
+						{
+							if((1 == keep_flag[l])
+								&& (af_pnt[l][0] == power_polynomial_table[i][0])
+								&& (af_pnt[m][0] != power_polynomial_table[i][0]))
+							{
+								x_i_sel_flag = 1;
+								break;
+							}
+						}
+						if(1 == x_i_sel_flag)
+						{
+							for(k_idx = 0; k_idx < GF_FIELD; k_idx++)
+							{
+								if(power_polynomial_table[k_idx][0] == af_pnt[k][0])
+								{
+									break;
+								}
+							}
+							l_val = gf_multp(l_val, t_val[i][j][k_idx]);
+							DEBUG_NOTICE("x_r_val_cal: %ld %ld | %x %x | %x %x %x %x\n",
+							             k,
+							             m,
+							             power_polynomial_table[j][0],
+							             power_polynomial_table[i][0],
+							             t_val[i][j][k_idx],
+							             l_val,
+							             recv_poly[j],
+							             r_val);
+						}
+					} 
+				}
+
+				if(af_pnt[m][1] == power_polynomial_table[j][0])
+				{
+					y_j_sel_flag = 1;
+					for(i = 0; i < GF_FIELD; i++)
+					{
+						y_i_sel_flag = 0;
+						for(l = 0; l < CODEWORD_LEN; l++)
+						{
+							if((1 == keep_flag[l])
+								&& (af_pnt[l][1] == power_polynomial_table[i][0])
+								&& (af_pnt[l][0] == af_pnt[m][0])
+								&& (af_pnt[l][1] != af_pnt[m][1]))
+							{
+								y_i_sel_flag = 1;
+								break;
+							}
+						}
+						if(1 == y_i_sel_flag)
+						{
+							for(k_idx = 0; k_idx < GF_FIELD; k_idx++)
+							{
+								if(power_polynomial_table[k_idx][0] == af_pnt[k][1])
+								{
+									break;
+								}
+							}
+							l_val = gf_multp(l_val, t_val[i][j][k_idx]);
+							DEBUG_NOTICE("y_r_val_cal: %ld %ld | %x %x | %x %x %x %x\n",
+							             k,
+							             m,
+							             power_polynomial_table[j][0],
+							             power_polynomial_table[i][0],
+							             t_val[i][j][k_idx],
+							             l_val,
+							             recv_poly[j],
+							             r_val);
+						}
+					} 
+				}
+			}
+			if((0xFF == recv_poly[m])
+				|| (0xFF == l_val))
+			{
+				tmp_val = 0xFF;
+			}
+			else if(0x0 == recv_poly[m])
+			{
+				tmp_val = l_val;
+			}
+			else if(0x0 == l_val)
+			{
+				tmp_val = recv_poly[m];
+			}
+			else
+			{
+				tmp_val = gf_multp(recv_poly[m], l_val);
+			}
+			if((0xFF == r_val)
+				&& (0xFF == tmp_val))
+			{
+				r_val = 0xFF;
+			}
+			else if((0xFF != r_val)
+					&& (0xFF == tmp_val))
+			{
+				r_val = r_val;
+			}
+			else if((0xFF == r_val)
+					&& (0xFF != tmp_val))
+			{
+				r_val = tmp_val;
+			}
+			else
+			{
+				r_val = gf_add(r_val, tmp_val);
+			}
+		}
+		DEBUG_NOTICE("ret_cwd_gen: %ld | %x %x\n",
+		             k,
+		             r_val,
+		             ret_cwd_poly[k]);
+
+		ret_cwd_poly[k] = r_val;
+	}
+
+	return 0;
+}
+
+int era_cwd_gen()
+{
+	long long i = 0, j = 0, k = 0, l = 0, m = 0;
+	long long k_idx = 0;
+	unsigned char l_val = 0x0, r_val = 0xFF;
+	unsigned char y_her_curve_find_flag = 0;
+	unsigned char x_i_sel_flag = 0, y_i_sel_flag = 0;
+	unsigned char x_j_sel_flag = 0, y_j_sel_flag = 0;
+	unsigned char tmp_val = 0xFF;
+
+	memcpy(keep_sym, ret_est_cwd, sizeof(unsigned char) * CODEWORD_LEN);
+
+	for(k = 0; k < CODEWORD_LEN; k++)
+	{
+		if(0 == erasure_flag[k])
+		{
+			ret_est_cwd[k] = ret_est_cwd[k];//useless
+			continue;
+		}
+	
+		r_val = 0xFF;
+		for(m = 0; m < CODEWORD_LEN; m++)
+		{
+			if(1 == erasure_flag[m])
+			{
+				continue;
+			}
+			l_val = 0x0;
+			x_j_sel_flag = 0;
+			y_j_sel_flag = 0;
+			for(j = 0; j < GF_FIELD; j++)
+			{
+				if((1 == x_j_sel_flag)
+					&& (1 == y_j_sel_flag))
+				{
+					break;
+				}
+
+				if(af_pnt[m][0] == power_polynomial_table[j][0])
+				{
+					x_j_sel_flag = 1;
+					for(i = 0; i < GF_FIELD; i++)
+					{
+						x_i_sel_flag = 0;
+						for(l = 0; l < CODEWORD_LEN; l++)
+						{
+							if((0 == erasure_flag[l])
+								&& (af_pnt[l][0] == power_polynomial_table[i][0])
+								&& (af_pnt[m][0] != power_polynomial_table[i][0]))
+							{
+								x_i_sel_flag = 1;
+								break;
+							}
+						}
+						if(1 == x_i_sel_flag)
+						{
+							for(k_idx = 0; k_idx < GF_FIELD; k_idx++)
+							{
+								if(power_polynomial_table[k_idx][0] == af_pnt[k][0])
+								{
+									break;
+								}
+							}
+							l_val = gf_multp(l_val, t_val[i][j][k_idx]);
+							DEBUG_NOTICE("x_r_val_cal: %ld %ld | %x %x | %x %x %x %x\n",
+							             k,
+							             m,
+							             power_polynomial_table[j][0],
+							             power_polynomial_table[i][0],
+							             t_val[i][j][k_idx],
+							             l_val,
+							             keep_sym[j],
+							             r_val);
+						}
+					} 
+				}
+
+				if(af_pnt[m][1] == power_polynomial_table[j][0])
+				{
+					y_j_sel_flag = 1;
+					for(i = 0; i < GF_FIELD; i++)
+					{
+						y_i_sel_flag = 0;
+						for(l = 0; l < CODEWORD_LEN; l++)
+						{
+							if((0 == erasure_flag[l])
+								&& (af_pnt[l][1] == power_polynomial_table[i][0])
+								&& (af_pnt[l][0] == af_pnt[m][0])
+								&& (af_pnt[l][1] != af_pnt[m][1]))
+							{
+								y_i_sel_flag = 1;
+								break;
+							}
+						}
+						if(1 == y_i_sel_flag)
+						{
+							for(k_idx = 0; k_idx < GF_FIELD; k_idx++)
+							{
+								if(power_polynomial_table[k_idx][0] == af_pnt[k][1])
+								{
+									break;
+								}
+							}
+							l_val = gf_multp(l_val, t_val[i][j][k_idx]);
+							DEBUG_NOTICE("y_r_val_cal: %ld %ld | %x %x | %x %x %x %x\n",
+							             k,
+							             m,
+							             power_polynomial_table[j][0],
+							             power_polynomial_table[i][0],
+							             t_val[i][j][k_idx],
+							             l_val,
+							             keep_sym[j],
+							             r_val);
+						}
+					} 
+				}
+			}
+			if((0xFF == keep_sym[m])
+				|| (0xFF == l_val))
+			{
+				tmp_val = 0xFF;
+			}
+			else if(0x0 == keep_sym[m])
+			{
+				tmp_val = l_val;
+			}
+			else if(0x0 == l_val)
+			{
+				tmp_val = keep_sym[m];
+			}
+			else
+			{
+				tmp_val = gf_multp(keep_sym[m], l_val);
+			}
+			if((0xFF == r_val)
+				&& (0xFF == tmp_val))
+			{
+				r_val = 0xFF;
+			}
+			else if((0xFF != r_val)
+					&& (0xFF == tmp_val))
+			{
+				r_val = r_val;
+			}
+			else if((0xFF == r_val)
+					&& (0xFF != tmp_val))
+			{
+				r_val = tmp_val;
+			}
+			else
+			{
+				r_val = gf_add(r_val, tmp_val);
+			}
+		}
+		DEBUG_NOTICE("ret_cwd_gen: %ld | %x %x\n",
+		             k,
+		             r_val,
+		             ret_est_cwd[k]);
+
+		ret_est_cwd[k] = r_val;
 	}
 
 	return 0;
@@ -739,9 +1248,14 @@ int re_encoding_transform()
 {
 	keep_position_set(keep_flag);
 	v_poly_construct();
+#if (0 == CFG_FAST_RET)	
 	her_lagrange_poly_construct();
 	ret_poly_construct();
 	ret_encoding();
+#else
+	memset(ret_cwd_poly, 0xFF, sizeof(unsigned char) * CODEWORD_LEN);
+	ret_cwd_gen();
+#endif
 	ret_trans();
 
 	return 0;

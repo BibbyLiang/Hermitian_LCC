@@ -1,7 +1,7 @@
 #ifndef RE_ENCODING_H
 #define RE_ENCODING_H
 
-extern unsigned char lag_poly[GF_FIELD][MAX_POLY_TERM_SIZE];
+extern unsigned char lag_poly[CODEWORD_LEN][MAX_POLY_TERM_SIZE];
 extern unsigned char ret_poly[MAX_POLY_TERM_SIZE];
 extern unsigned char ret_cwd_poly[CODEWORD_LEN];
 extern unsigned char keep_sym[CODEWORD_LEN];
@@ -21,5 +21,8 @@ extern int ret_cwd_recover();
 extern int v_poly_construct();
 extern int keep_position_set(long long *keep_poition);
 extern int re_encoding_transform();
+extern int ret_fac_free(unsigned char *q0_poly, unsigned char *q1_poly, unsigned char *v_poly);
+extern int ret_t_val_cal();
+extern int era_cwd_gen();
 
 #endif
