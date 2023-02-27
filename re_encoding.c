@@ -23,6 +23,9 @@ unsigned char ret_est_cwd[CODEWORD_LEN];
 unsigned char v_poly[MAX_POLY_TERM_SIZE];
 unsigned char v_val[CODEWORD_LEN];
 unsigned char t_val[GF_FIELD][GF_FIELD][GF_FIELD];
+#if (1 == CFG_Y_RET_STORE)
+unsigned char y_t_val[CODEWORD_LEN][CODEWORD_LEN];
+#endif
 
 int her_lagrange_poly_construct()
 {
@@ -881,7 +884,7 @@ int ret_fac_free(unsigned char *q0_poly, unsigned char *q1_poly, unsigned char *
 int ret_t_val_cal()
 {
 	long long i = 0, j = 0, k = 0;
-	unsigned char up_val = 0xFF, down_val = 0xFF;
+	unsigned char up_val = 0xFF, down_val = 0xFF, val = 0xFF;
 
 	/*clear*/
 	for(i = 0; i < GF_FIELD; i++)
@@ -891,6 +894,12 @@ int ret_t_val_cal()
 			memset(t_val[i][j], 0xFF, sizeof(unsigned char) * GF_FIELD);
 		}
 	}
+#if 1//(1 == CFG_Y_RET_STORE)	
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		memset(y_t_val[i], 0xFF, sizeof(unsigned char) * CODEWORD_LEN);
+	}
+#endif
 
 	for(i = 0; i < GF_FIELD; i++)
 	{
@@ -912,7 +921,27 @@ int ret_t_val_cal()
 			}
 		}
 	}
-
+#if (1 == CFG_Y_RET_STORE)
+	for(k = 0; k < CODEWORD_LEN; k++)
+	{
+		for(j = 0; j < CODEWORD_LEN; j++)
+		{
+			val = 0x0;
+			for(i = 0; i < CODEWORD_LEN; i++)
+			{
+				if((af_pnt[i][0] == af_pnt[j][0])
+					&& (af_pnt[i][1] != af_pnt[j][1]))
+				{
+					up_val = gf_add(af_pnt[i][1], af_pnt[k][1]);
+					down_val = gf_add(af_pnt[i][1], af_pnt[j][1]);
+					val = gf_multp(val,
+								   gf_div(up_val, down_val));
+				}
+			}
+			y_t_val[j][k] = val;
+		}
+	}
+#endif
 	return 0;
 }
 
@@ -933,7 +962,13 @@ int ret_cwd_gen()
 			ret_cwd_poly[k] = recv_poly[k];
 			continue;
 		}
-	
+		for(k_idx = 0; k_idx < GF_FIELD; k_idx++)
+		{
+			if(power_polynomial_table[k_idx][0] == af_pnt[k][0])
+			{
+				break;
+			}
+		}
 		r_val = 0xFF;
 		for(m = 0; m < CODEWORD_LEN; m++)
 		{
@@ -943,13 +978,23 @@ int ret_cwd_gen()
 			}
 			l_val = 0x0;
 			x_j_sel_flag = 0;
+#if (0 == CFG_Y_RET_STORE)
 			y_j_sel_flag = 0;
+#else
+			y_j_sel_flag = 1;
+#endif
+#if (0 == CFG_Y_RET_STORE)
 			for(j = 0; j < GF_FIELD; j++)
+#else			
+			j = m / GF_Q;
+#endif			
 			{
 				if((1 == x_j_sel_flag)
 					&& (1 == y_j_sel_flag))
 				{
+#if (0 == CFG_Y_RET_STORE)				
 					break;
+#endif					
 				}
 
 				if(af_pnt[m][0] == power_polynomial_table[j][0])
@@ -958,26 +1003,44 @@ int ret_cwd_gen()
 					for(i = 0; i < GF_FIELD; i++)
 					{
 						x_i_sel_flag = 0;
+#if (0 == CFG_Y_RET_STORE)						
 						for(l = 0; l < CODEWORD_LEN; l++)
+#else						
+						l = i * GF_Q;
+#endif						
 						{
 							if((1 == keep_flag[l])
+#if (0 == CFG_Y_RET_STORE)							
 								&& (af_pnt[l][0] == power_polynomial_table[i][0])
+#endif								
 								&& (af_pnt[m][0] != power_polynomial_table[i][0]))
 							{
 								x_i_sel_flag = 1;
+#if (0 == CFG_Y_RET_STORE)
 								break;
+#endif								
 							}
 						}
 						if(1 == x_i_sel_flag)
 						{
-							for(k_idx = 0; k_idx < GF_FIELD; k_idx++)
+							//l_val = gf_multp(l_val, t_val[i][j][k_idx]);
+							if((0xFF == t_val[i][j][k_idx])
+								|| (0xFF == l_val))
 							{
-								if(power_polynomial_table[k_idx][0] == af_pnt[k][0])
-								{
-									break;
-								}
+								l_val = 0xFF;
 							}
-							l_val = gf_multp(l_val, t_val[i][j][k_idx]);
+							else if(0x0 == t_val[i][j][k_idx])
+							{
+								l_val = l_val;
+							}
+							else if(0x0 == l_val)
+							{
+								l_val = t_val[i][j][k_idx];
+							}
+							else
+							{
+								l_val = gf_multp(l_val, t_val[i][j][k_idx]);
+							}
 							DEBUG_NOTICE("x_r_val_cal: %ld %ld | %x %x | %x %x %x %x\n",
 							             k,
 							             m,
@@ -991,6 +1054,7 @@ int ret_cwd_gen()
 					} 
 				}
 
+#if (0 == CFG_Y_RET_STORE)
 				if(af_pnt[m][1] == power_polynomial_table[j][0])
 				{
 					y_j_sel_flag = 1;
@@ -1010,13 +1074,6 @@ int ret_cwd_gen()
 						}
 						if(1 == y_i_sel_flag)
 						{
-							for(k_idx = 0; k_idx < GF_FIELD; k_idx++)
-							{
-								if(power_polynomial_table[k_idx][0] == af_pnt[k][1])
-								{
-									break;
-								}
-							}
 							l_val = gf_multp(l_val, t_val[i][j][k_idx]);
 							DEBUG_NOTICE("y_r_val_cal: %ld %ld | %x %x | %x %x %x %x\n",
 							             k,
@@ -1029,8 +1086,30 @@ int ret_cwd_gen()
 							             r_val);
 						}
 					} 
-				}
+				}		
+#endif
 			}
+
+#if (1 == CFG_Y_RET_STORE)
+			if((0xFF == y_t_val[m][k])
+				|| (0xFF == l_val))
+			{
+				l_val = 0xFF;
+			}
+			else if(0x0 == y_t_val[m][k])
+			{
+				l_val = l_val;
+			}
+			else if(0x0 == l_val)
+			{
+				l_val = y_t_val[m][k];
+			}
+			else
+			{
+				l_val = gf_multp(l_val, y_t_val[m][k]);
+			}
+#endif
+
 			if((0xFF == recv_poly[m])
 				|| (0xFF == l_val))
 			{
@@ -1048,6 +1127,7 @@ int ret_cwd_gen()
 			{
 				tmp_val = gf_multp(recv_poly[m], l_val);
 			}
+
 			if((0xFF == r_val)
 				&& (0xFF == tmp_val))
 			{
@@ -1098,7 +1178,13 @@ int era_cwd_gen()
 			ret_est_cwd[k] = ret_est_cwd[k];//useless
 			continue;
 		}
-	
+		for(k_idx = 0; k_idx < GF_FIELD; k_idx++)
+		{
+			if(power_polynomial_table[k_idx][0] == af_pnt[k][0])
+			{
+				break;
+			}
+		}
 		r_val = 0xFF;
 		for(m = 0; m < CODEWORD_LEN; m++)
 		{
@@ -1109,12 +1195,18 @@ int era_cwd_gen()
 			l_val = 0x0;
 			x_j_sel_flag = 0;
 			y_j_sel_flag = 0;
+#if (0 == CFG_Y_RET_STORE)			
 			for(j = 0; j < GF_FIELD; j++)
+#else			
+			j = m / GF_Q;
+#endif			
 			{
 				if((1 == x_j_sel_flag)
 					&& (1 == y_j_sel_flag))
 				{
+#if (0 == CFG_Y_RET_STORE)				
 					break;
+#endif					
 				}
 
 				if(af_pnt[m][0] == power_polynomial_table[j][0])
@@ -1123,25 +1215,26 @@ int era_cwd_gen()
 					for(i = 0; i < GF_FIELD; i++)
 					{
 						x_i_sel_flag = 0;
+#if (0 == CFG_Y_RET_STORE)						
 						for(l = 0; l < CODEWORD_LEN; l++)
+#else						
+						l = i * GF_Q;
+#endif						
 						{
 							if((0 == erasure_flag[l])
+#if (0 == CFG_Y_RET_STORE)							
 								&& (af_pnt[l][0] == power_polynomial_table[i][0])
+#endif								
 								&& (af_pnt[m][0] != power_polynomial_table[i][0]))
 							{
 								x_i_sel_flag = 1;
+#if (0 == CFG_Y_RET_STORE)								
 								break;
+#endif								
 							}
 						}
 						if(1 == x_i_sel_flag)
 						{
-							for(k_idx = 0; k_idx < GF_FIELD; k_idx++)
-							{
-								if(power_polynomial_table[k_idx][0] == af_pnt[k][0])
-								{
-									break;
-								}
-							}
 							l_val = gf_multp(l_val, t_val[i][j][k_idx]);
 							DEBUG_NOTICE("x_r_val_cal: %ld %ld | %x %x | %x %x %x %x\n",
 							             k,
@@ -1155,7 +1248,7 @@ int era_cwd_gen()
 						}
 					} 
 				}
-
+#if (0 == CFG_Y_RET_STORE)
 				if(af_pnt[m][1] == power_polynomial_table[j][0])
 				{
 					y_j_sel_flag = 1;
@@ -1175,13 +1268,6 @@ int era_cwd_gen()
 						}
 						if(1 == y_i_sel_flag)
 						{
-							for(k_idx = 0; k_idx < GF_FIELD; k_idx++)
-							{
-								if(power_polynomial_table[k_idx][0] == af_pnt[k][1])
-								{
-									break;
-								}
-							}
 							l_val = gf_multp(l_val, t_val[i][j][k_idx]);
 							DEBUG_NOTICE("y_r_val_cal: %ld %ld | %x %x | %x %x %x %x\n",
 							             k,
@@ -1195,7 +1281,27 @@ int era_cwd_gen()
 						}
 					} 
 				}
+#endif				
 			}
+#if (1 == CFG_Y_RET_STORE)
+			if((0xFF == y_t_val[m][k])
+				|| (0xFF == l_val))
+			{
+				l_val = 0xFF;
+			}
+			else if(0x0 == y_t_val[m][k])
+			{
+				l_val = l_val;
+			}
+			else if(0x0 == l_val)
+			{
+				l_val = y_t_val[m][k];
+			}
+			else
+			{
+				l_val = gf_multp(l_val, y_t_val[m][k]);
+			}
+#endif
 			if((0xFF == keep_sym[m])
 				|| (0xFF == l_val))
 			{
@@ -1248,6 +1354,7 @@ int re_encoding_transform()
 {
 	keep_position_set(keep_flag);
 	v_poly_construct();
+
 #if (0 == CFG_FAST_RET)	
 	her_lagrange_poly_construct();
 	ret_poly_construct();

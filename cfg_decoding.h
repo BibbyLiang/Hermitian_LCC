@@ -12,7 +12,7 @@
 #endif
 #if (4 == GF_Q)
 #define GF_FIELD        16
-#define MESSAGE_LEN     39
+#define MESSAGE_LEN     49
 #endif
 #if (6 == GF_Q)
 #define GF_FIELD        64
@@ -52,5 +52,6 @@
 
 #define CFG_RET			 1
 #define CFG_FAST_RET	 1
+#define CFG_Y_RET_STORE  CFG_FAST_RET//there are some bugs, it cannot be set as 0 independently
 
 #endif

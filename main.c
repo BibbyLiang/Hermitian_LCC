@@ -39,7 +39,7 @@ void main()
 	affine_points_cal();
 	term_degree_table_init();
 	pole_basis_cal();
-#if (1 == CFG_FAST_RET)	
+#if (1 == CFG_FAST_RET)
 	ret_t_val_cal();
 #endif	
 
@@ -49,7 +49,7 @@ void main()
 			&& (0 != i))
 		{
 			DEBUG_SYS("sim: %ld / %ld, err: %ld\n", i, sim_cnt, err_cnt);
-			DEBUG_SYS("Decoding Complexity: %f %f\n", (float)(add_cnt / i), (float)(mul_cnt / i));
+			DEBUG_SYS("Decoding Complexity: %f %f\n", (float)(add_cnt / i), (float)((mul_cnt + div_cnt) / i));
 			DEBUG_SYS("Decoding Measured Time: %f\n", runtime / ((float)i));
 		}
 
@@ -63,7 +63,7 @@ void main()
 
 #if (1 == CFG_RET)
 		re_encoding_transform();
-#endif		
+#endif
 
 		tst_vct_form();
 
