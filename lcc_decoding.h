@@ -20,7 +20,17 @@ extern int tst_vct_init();
 extern int tst_vct_exit();
 extern int tst_vct_form();
 extern int koetter_interpolation_hermitian();
+extern int recover_lag_poly_init();
+extern int cwd2msg(unsigned char *cwd, unsigned char *msg);
 extern int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd);
 extern int check_result_msg(unsigned char *msg, unsigned char *est_msg);
+extern int koetter_intp_her_lcc(unsigned char *test_poly_seq,
+                                	long long intp_start_idx,
+                                	unsigned char input_poly[][MAX_POLY_TERM_SIZE],
+                                	unsigned char *output_poly);
+extern int her_fac(unsigned char *poly,
+	                 unsigned char *est_msg,
+	                 unsigned char *est_cwd);
+extern int her_fac_free(unsigned char *poly, unsigned char *est_cwd);
 
 #endif

@@ -28,7 +28,7 @@ void init_simulation()
 void main()
 {
 	long long i = 0;
-	long long sim_cnt = 10000, monitor_cnt = 100;
+	long long sim_cnt = 1, monitor_cnt = 1;
 
 	init_simulation();
 
@@ -41,7 +41,8 @@ void main()
 	pole_basis_cal();
 #if (1 == CFG_FAST_RET)
 	ret_t_val_cal();
-#endif	
+#endif
+	recover_lag_poly_init();
 
 	for(i = 0; i < sim_cnt; i++)
 	{
@@ -75,6 +76,7 @@ void main()
 
 #if (1 == CFG_FAC_FREE)
 		check_result_cwd(cwd_poly, est_cwd_poly);
+		//check_result_msg(msg_poly, est_msg_poly);
 #else
 #if (0 == CFG_RET)
 		check_result_msg(msg_poly, est_msg_poly);
@@ -84,7 +86,7 @@ void main()
 #endif
 	}
 	DEBUG_SYS("sim: %ld, err: %ld\n", sim_cnt, err_cnt);
-	DEBUG_SYS("Decoding Complexity: %f %f\n", (float)(add_cnt / sim_cnt), (float)(mul_cnt / sim_cnt));
+	DEBUG_SYS("Decoding Complexity: %f %f\n", (float)(add_cnt / sim_cnt), (float)((mul_cnt + div_cnt) / sim_cnt));
 	DEBUG_SYS("Decoding Measured Time: %f\n", runtime / ((float)sim_cnt));
 
 	tst_vct_exit();

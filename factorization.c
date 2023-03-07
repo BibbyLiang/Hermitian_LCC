@@ -562,12 +562,14 @@ int poly_dev_build(unsigned char *poly, unsigned char *poly_dev)
 						&& (0 == z_term_degree_table[j]))
 					{
 						poly_dev[j] = gf_add(poly_dev[j], poly[i]);
+#if 1
 						DEBUG_NOTICE("poly_dev_cal_x: %ld %ld | %ld %ld | %x\n",
 						             x_term_degree_table[i],
 						             y_term_degree_table[i],
 						             x_degree,
 						             y_degree,
 						             poly_dev[j]);
+#endif						
 						break;
 					}
 				}
@@ -583,12 +585,14 @@ int poly_dev_build(unsigned char *poly, unsigned char *poly_dev)
 						&& (0 == z_term_degree_table[j]))
 					{
 						poly_dev[j] = gf_add(poly_dev[j], poly[i]);
+#if 1
 						DEBUG_NOTICE("poly_dev_cal_y: %ld %ld | %ld %ld | %x\n",
 						             x_term_degree_table[i],
 						             y_term_degree_table[i],
 						             x_degree,
 						             y_degree,
 						             poly_dev[j]);
+#endif						
 						break;
 					}
 				}
@@ -973,7 +977,14 @@ int fac_dev_init()
 
 	poly_dev_build(q0_poly_coef, store_q0_dev);
 	poly_dev_build(q1_poly_coef, store_q1_dev);
+#if (1 == CFG_RET)	
 	poly_dev_build(v_poly, store_v_dev);
+#endif
+
+#if 0//test
+	DEBUG_NOTICE("test_poly_dev\n");
+	test_poly_dev();
+#endif
 
 	return 0;
 }

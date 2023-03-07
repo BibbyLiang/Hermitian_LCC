@@ -440,6 +440,60 @@ int poly_q0q1_get(long long poly_idx)
 	return 0;
 }
 
+int poly_q0q1_get_new(unsigned char *poly)
+{
+	long long i = 0, j = 0;
+	
+	memset(q0_poly_coef, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+	memset(q1_poly_coef, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+
+	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
+	{
+		if(1 == z_term_degree_table[i])
+		{
+			for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
+			{
+				if((x_term_degree_table[j] == x_term_degree_table[i])
+					&& (y_term_degree_table[j] == y_term_degree_table[i])
+					&& (0 == z_term_degree_table[j]))
+				{
+					break;
+				}
+			}
+			q1_poly_coef[j] = poly[i];
+		}
+		else
+		{
+			q0_poly_coef[i] = poly[i];
+		}
+	}
+#if (1 == TEST_MODE)	
+	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
+	{
+		if(0xFF != q0_poly_coef[i])
+		{
+			DEBUG_NOTICE("q0_poly: %ld %ld %ld | %x\n",
+			             x_term_degree_table[i],
+				         y_term_degree_table[i],
+				         z_term_degree_table[i],
+				         q0_poly_coef[i]);
+		}
+	}
+	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
+	{
+		if(0xFF != q1_poly_coef[i])
+		{
+			DEBUG_NOTICE("q1_poly: %ld %ld %ld | %x\n",
+			             x_term_degree_table[i],
+				         y_term_degree_table[i],
+				         z_term_degree_table[i],
+				         q1_poly_coef[i]);
+		}
+	}
+#endif
+	return 0;
+}
+
 int poly_normal_update(unsigned char *poly_tmp, unsigned char *poly_update, unsigned char *poly_min, unsigned char hs_dev_min, unsigned char hs_dev_self)
 {
 	long long i = 0;
@@ -700,7 +754,16 @@ int poly_dev_test(unsigned char *test_poly_seq)
 			if((min_degree > intp_poly_degree[j])
 				&& (0 != z_flag))
 #else
+#if 0
+			if(((min_degree > intp_poly_degree[j])
+				&& ((CODEWORD_LEN - 1) != i))
+					||
+				((min_degree > intp_poly_degree[j])
+				&& ((CODEWORD_LEN - 1) == i)
+				&& (0 != z_flag)))
+#else
 			if(min_degree > intp_poly_degree[j])
+#endif
 #endif
 			{
 #if 0
@@ -716,6 +779,189 @@ int poly_dev_test(unsigned char *test_poly_seq)
 		}
 	}
 
+#if 0//test check error
+	memset(intp_poly_coef[min_idx], 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
+	{
+		if((0 == x_term_degree_table[i])
+			&& (0 == y_term_degree_table[i])
+			&& (1 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x1;
+		}
+		if((0 == x_term_degree_table[i])
+			&& (1 == y_term_degree_table[i])
+			&& (1 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x2;
+		}
+		if((0 == x_term_degree_table[i])
+			&& (2 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x0;
+		}
+		if((0 == x_term_degree_table[i])
+			&& (2 == y_term_degree_table[i])
+			&& (1 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x8;
+		}
+		if((0 == x_term_degree_table[i])
+			&& (3 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x4;
+		}
+		if((0 == x_term_degree_table[i])
+			&& (3 == y_term_degree_table[i])
+			&& (1 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x0;
+		}
+		if((0 == x_term_degree_table[i])
+			&& (4 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x1;
+		}
+		if((0 == x_term_degree_table[i])
+			&& (5 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x8;
+		}
+		if((1 == x_term_degree_table[i])
+			&& (0 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x1;
+		}
+		if((1 == x_term_degree_table[i])
+			&& (0 == y_term_degree_table[i])
+			&& (1 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0xa;
+		}
+		if((1 == x_term_degree_table[i])
+			&& (1 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x4;
+		}
+		if((1 == x_term_degree_table[i])
+			&& (2 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x6;
+		}
+		if((1 == x_term_degree_table[i])
+			&& (2 == y_term_degree_table[i])
+			&& (1 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x0;
+		}
+		if((1 == x_term_degree_table[i])
+			&& (3 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x6;
+		}
+		if((1 == x_term_degree_table[i])
+			&& (4 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x1;
+		}
+		if((2 == x_term_degree_table[i])
+			&& (0 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x9;
+		}
+		if((2 == x_term_degree_table[i])
+			&& (0 == y_term_degree_table[i])
+			&& (1 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x2;
+		}
+		if((2 == x_term_degree_table[i])
+			&& (1 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0xe;
+		}
+		if((2 == x_term_degree_table[i])
+			&& (1 == y_term_degree_table[i])
+			&& (1 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x3;
+		}
+		if((2 == x_term_degree_table[i])
+			&& (2 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x4;
+		}
+		if((2 == x_term_degree_table[i])
+			&& (3 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x2;
+		}
+		if((3 == x_term_degree_table[i])
+			&& (0 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x2;
+		}
+		if((3 == x_term_degree_table[i])
+			&& (0 == y_term_degree_table[i])
+			&& (1 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0xe;
+		}
+		if((3 == x_term_degree_table[i])
+			&& (1 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x8;
+		}
+		if((3 == x_term_degree_table[i])
+			&& (2 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0xa;
+		}
+		if((3 == x_term_degree_table[i])
+			&& (3 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x7;
+		}
+		if((4 == x_term_degree_table[i])
+			&& (0 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0x5;
+		}
+		if((4 == x_term_degree_table[i])
+			&& (1 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0xe;
+		}
+		if((4 == x_term_degree_table[i])
+			&& (2 == y_term_degree_table[i])
+			&& (0 == z_term_degree_table[i]))
+		{
+			intp_poly_coef[min_idx][i] = 0xb;
+		}
+	}
+#endif
+#if 0
+	her_convert(intp_poly_coef[min_idx]);
+#endif	
 	memcpy(min_intp_poly, intp_poly_coef[min_idx], sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
 	poly_q0q1_get(min_idx);
 	min_intp_idx = min_idx;

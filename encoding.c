@@ -199,13 +199,47 @@ int rnd_msg_gen()
 		             msg_poly[i]);
 	}
 #endif
-#if 0//(1 == TEST_MODE)
+#if (1 == FAC_FREE_ERR)
 	memset(msg_poly, 0xFF, sizeof(unsigned char) * MESSAGE_LEN);
-	msg_poly[0] = 0x1;
-	msg_poly[1] = 0x1;
-	msg_poly[2] = 0x2;
-	msg_poly[3] = 0x1;
-	msg_poly[4] = 0x1;
+	msg_poly[0] = 0xd;
+	msg_poly[1] = 0x4;
+	msg_poly[2] = 0xff;
+	msg_poly[3] = 0x5;
+	msg_poly[4] = 0xd;
+	msg_poly[5] = 0x1;
+	msg_poly[6] = 0x1;
+	msg_poly[7] = 0x2;
+	msg_poly[8] = 0x4;
+	msg_poly[9] = 0x4;
+	msg_poly[10] = 0xe;
+	msg_poly[11] = 0x1;
+	msg_poly[12] = 0xa;
+	msg_poly[13] = 0x5;
+	msg_poly[14] = 0x6;
+	msg_poly[15] = 0x6;
+	msg_poly[16] = 0x0;
+	msg_poly[17] = 0x5;
+	msg_poly[18] = 0xe;
+	msg_poly[19] = 0x6;
+	msg_poly[20] = 0x0;
+	msg_poly[21] = 0xe;
+	msg_poly[22] = 0x3;
+	msg_poly[23] = 0x1;
+	msg_poly[24] = 0x8;
+	msg_poly[25] = 0xb;
+	msg_poly[26] = 0xa;
+	msg_poly[27] = 0xff;
+	msg_poly[28] = 0xa;
+	msg_poly[29] = 0x0;
+	msg_poly[30] = 0x8;
+	msg_poly[31] = 0xa;
+	msg_poly[32] = 0x2;
+	msg_poly[33] = 0xff;
+	msg_poly[34] = 0x9;
+	msg_poly[35] = 0xa;
+	msg_poly[36] = 0xa;
+	msg_poly[37] = 0x7;
+	msg_poly[38] = 0x7;
 	for(i = 0; i < MESSAGE_LEN; i++)
 	{
 		DEBUG_NOTICE("test_msg_poly: %ld | %x\n",
@@ -259,6 +293,7 @@ int her_encoding(unsigned char *msg, unsigned char *cwd)
 
 int her_convert(unsigned char *poly)
 {
+#if (0 == FAC_FREE_ERR)
 	long long i = 0, j = 0;
 	int degree_over_flag = 0;
 	int convert_flag = 0;
@@ -337,7 +372,7 @@ int her_convert(unsigned char *poly)
 		}
 	}
 #endif
-
+#endif
 	return 0;
 }
 

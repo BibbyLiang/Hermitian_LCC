@@ -199,15 +199,28 @@ int trans_over_chnl()
 				recv_poly,
 				CODEWORD_LEN);
 
-#if 0//(1 == TEST_MODE)
-	recv_poly[0] = 0x1;
-	recv_poly[1] = 0x0;
-	recv_poly[2] = 0x1;
-	recv_poly[3] = 0x0;
-	recv_poly[4] = 0xFF;
-	recv_poly[5] = 0xFF;
-	recv_poly[6] = 0x2;
-	recv_poly[7] = 0x0;
+#if (1 == FAC_FREE_ERR)
+	memcpy(recv_poly, cwd_poly, sizeof(unsigned char) * CODEWORD_LEN);
+#if 0
+	recv_poly[2] = 0xd;
+	recv_poly[12] = 0x9;
+	recv_poly[22] = 0x1;
+	recv_poly[36] = 0xc;
+	recv_poly[43] = 0xFF;
+	recv_poly[45] = 0xd;
+	recv_poly[46] = 0x4;
+	recv_poly[49] = 0x9;
+	recv_poly[61] = 0x1;
+#endif
+	recv_poly[2] = 0xFF;
+	recv_poly[12] = 0xFF;
+	recv_poly[22] = 0xFF;
+	recv_poly[36] = 0xFF;
+	recv_poly[43] = 0xFF;
+	recv_poly[45] = 0xFF;
+	recv_poly[46] = 0xFF;
+	recv_poly[49] = 0xFF;
+	recv_poly[61] = 0x0;
 #endif
 
 	return 0;

@@ -653,18 +653,21 @@ int keep_position_set(long long *keep_poition)
 		}
 	}
 
-#if 0//(1 == TEST_MODE)
-	memset(keep_poition, 0, sizeof(long long) * CODEWORD_LEN);
-	keep_poition[2] = 1;
-	keep_poition[3] = 1;
-	keep_poition[4] = 1;
-	keep_poition[5] = 1;
-	keep_cnt = 4;
+#if (1 == FAC_FREE_ERR)
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		keep_poition[i] = 0;
+	}
+	for(i = 0; i < 32; i++)
+	{
+		keep_poition[i] = 1;
+	}
+	keep_cnt = 32;
 #endif	
 #if (1 == TEST_MODE)
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
-		DEBUG_NOTICE("keep_poition: %ld | %ld\n", i, keep_poition[i]);
+		DEBUG_NOTICE("keep_poition: %ld | %ld %ld\n", i, keep_cnt, keep_poition[i]);
 	}
 #endif
 	return 0;
@@ -701,6 +704,7 @@ unsigned char ret_fac_free_dev(long long sym_idx, unsigned char dev_flag, unsign
 	{
 		erasure_flag[sym_idx] = 1;
 		dev_to_flag[sym_idx] = 1;
+		DEBUG_NOTICE("erasure_check: %ld | %x %x\n", sym_idx, recv_poly[sym_idx], cwd_poly[sym_idx]);
 	}
 
 	DEBUG_NOTICE("ret_fac_free_dev: %ld  %ld | %d %d | %x %x %x | %x\n",
@@ -714,6 +718,21 @@ unsigned char ret_fac_free_dev(long long sym_idx, unsigned char dev_flag, unsign
 	             val);
 
 	return val;
+}
+
+int test_poly_dev()
+{
+	long long i = 0;
+	unsigned char q0_poly_tmp_1[MAX_POLY_TERM_SIZE], q1_poly_tmp_1[MAX_POLY_TERM_SIZE];
+	unsigned char q0_poly_tmp_2[MAX_POLY_TERM_SIZE], q1_poly_tmp_2[MAX_POLY_TERM_SIZE];
+
+	memcpy(q0_poly_tmp_1, store_q0_dev, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+	memcpy(q1_poly_tmp_1, store_q1_dev, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+
+	poly_dev_build(q0_poly_tmp_1, q0_poly_tmp_2);
+	poly_dev_build(q1_poly_tmp_1, q1_poly_tmp_2);
+
+	return 0;
 }
 
 int ret_fac_free(unsigned char *q0_poly, unsigned char *q1_poly, unsigned char *v_poly)
@@ -799,7 +818,9 @@ int ret_fac_free(unsigned char *q0_poly, unsigned char *q1_poly, unsigned char *
 				dev_to_cnt++;
 			}
 		}
-		
+#if (1 == TEST_MODE)
+		q0_val = poly_eva_x_y(q0_poly, af_pnt[i][0], af_pnt[i][1]);
+#endif		
 		DEBUG_NOTICE("ret_fac_free_cal: %ld | %d | %x %x %x | %x\n",
 				     i,
 				     erasure_flag[i],
@@ -894,7 +915,7 @@ int ret_t_val_cal()
 			memset(t_val[i][j], 0xFF, sizeof(unsigned char) * GF_FIELD);
 		}
 	}
-#if 1//(1 == CFG_Y_RET_STORE)	
+#if (1 == CFG_Y_RET_STORE)	
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
 		memset(y_t_val[i], 0xFF, sizeof(unsigned char) * CODEWORD_LEN);
@@ -1018,7 +1039,7 @@ int ret_cwd_gen()
 								x_i_sel_flag = 1;
 #if (0 == CFG_Y_RET_STORE)
 								break;
-#endif								
+#endif
 							}
 						}
 						if(1 == x_i_sel_flag)
@@ -1173,7 +1194,8 @@ int era_cwd_gen()
 
 	for(k = 0; k < CODEWORD_LEN; k++)
 	{
-		if(0 == erasure_flag[k])
+		if((0 == erasure_flag[k])
+			|| (0 == dev_to_flag[k]))
 		{
 			ret_est_cwd[k] = ret_est_cwd[k];//useless
 			continue;
