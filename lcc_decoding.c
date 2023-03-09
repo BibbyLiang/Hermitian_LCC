@@ -22,12 +22,26 @@ long long err_cnt = 0;
 float chnl_rel_matrix[CODEWORD_LEN + 1][CODEWORD_LEN];
 float chnl_rel_order[CODEWORD_LEN];
 long long chnl_rel_order_idx[CODEWORD_LEN];
+long long chnl_rel_order_pair_idx[CODEWORD_LEN];
 long long chnl_rel_max_id[CODEWORD_LEN];
 long long chnl_rel_scd_id[CODEWORD_LEN];
+
 long long tst_vct_num = 0;
 unsigned char **tst_vct;
+unsigned char **ret_tst_vct;
+unsigned char **tv_est_msg;
+unsigned char **tv_est_cwd;
+long long *tv_err;
+
 unsigned char recover_lag_poly[CODEWORD_LEN][MAX_POLY_TERM_SIZE];
 unsigned char recover_lag_flag[CODEWORD_LEN];
+
+unsigned char ***node_poly;
+unsigned char *node_tore_flag;
+long long node_num = 0;
+unsigned char cmm_intp_poly[KOT_INTP_POLY_NUM][MAX_POLY_TERM_SIZE];
+long long cmm_intp_poly_degree[KOT_INTP_POLY_NUM];
+long long intp_cnt = 0;
 
 int chnl_rel_seq_order()
 {
@@ -95,6 +109,9 @@ int chnl_rel_seq_order()
 		             chnl_rel_order_idx[i]);
 	}
 #endif
+
+	memcpy(chnl_rel_order_pair_idx, chnl_rel_order_idx, sizeof(long long) * CODEWORD_LEN);
+
 	return 0;
 }
 
@@ -289,10 +306,45 @@ int tst_vct_init()
 	{
 		tst_vct[i] = (unsigned char*)malloc(sizeof(unsigned char) * CODEWORD_LEN);
 	}
-	
 	for (i = 0; i < tst_vct_num; i++)
 	{
 		memset(tst_vct[i], 0xFF, sizeof(unsigned char) * CODEWORD_LEN);
+	}
+
+	ret_tst_vct = (unsigned char**)malloc(sizeof(unsigned char*) * tst_vct_num);
+	for (i = 0; i < tst_vct_num; i++)
+	{
+		ret_tst_vct[i] = (unsigned char*)malloc(sizeof(unsigned char) * CODEWORD_LEN);
+	}
+	for (i = 0; i < tst_vct_num; i++)
+	{
+		memset(ret_tst_vct[i], 0xFF, sizeof(unsigned char) * CODEWORD_LEN);
+	}
+
+	tv_est_msg = (unsigned char**)malloc(sizeof(unsigned char*) * tst_vct_num);
+	for (i = 0; i < tst_vct_num; i++)
+	{
+		tv_est_msg[i] = (unsigned char*)malloc(sizeof(unsigned char) * MESSAGE_LEN);
+	}
+	for (i = 0; i < tst_vct_num; i++)
+	{
+		memset(tv_est_msg[i], 0xFF, sizeof(unsigned char) * MESSAGE_LEN);
+	}
+
+	tv_est_cwd = (unsigned char**)malloc(sizeof(unsigned char*) * tst_vct_num);
+	for (i = 0; i < tst_vct_num; i++)
+	{
+		tv_est_cwd[i] = (unsigned char*)malloc(sizeof(unsigned char) * CODEWORD_LEN);
+	}
+	for (i = 0; i < tst_vct_num; i++)
+	{
+		memset(tv_est_cwd[i], 0xFF, sizeof(unsigned char) * CODEWORD_LEN);
+	}
+
+	tv_err = (long long*)malloc(sizeof(long long) * tst_vct_num);
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		tv_err[i] = 0;
 	}
 
 	DEBUG_NOTICE("tst_vct_init OK\n");
@@ -311,6 +363,33 @@ int tst_vct_exit()
   	}
 	free(tst_vct);
 	tst_vct = NULL;
+
+	for (i = 0; i < tst_vct_num; i++)
+	{
+  		free(ret_tst_vct[i]);
+		ret_tst_vct[i] = NULL;
+  	}
+	free(ret_tst_vct);
+	ret_tst_vct = NULL;
+	
+	for (i = 0; i < tst_vct_num; i++)
+	{
+  		free(tv_est_msg[i]);
+		tv_est_msg[i] = NULL;
+  	}
+	free(tv_est_msg);
+	tv_est_msg = NULL;
+	
+	for (i = 0; i < tst_vct_num; i++)
+	{
+  		free(tv_est_cwd[i]);
+		tv_est_cwd[i] = NULL;
+  	}
+	free(tv_est_cwd);
+	tv_est_cwd = NULL;
+
+	free(tv_err);
+	tv_err = NULL;
 
 	return 0;
 }
@@ -354,6 +433,23 @@ int tst_vct_form()
 		}
 	}
 
+	/*for test*/
+	//memcpy(tst_vct[1], tst_vct[0], sizeof(unsigned char) * CODEWORD_LEN);
+	//memcpy(tst_vct[2], tst_vct[0], sizeof(unsigned char) * CODEWORD_LEN);
+
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		tv_err[i] = 0;
+		for(j = 0; j < CODEWORD_LEN; j++)
+		{
+			if(tst_vct[i][j] != cwd_poly[j])
+			{
+				tv_err[i]++;
+			}
+		}
+		DEBUG_NOTICE("tv_err: %ld | %ld\n", i, tv_err[i]);
+	}
+
 #if (1 == CFG_DEBUG_NOTICE)
 	for(i = 0; i < tst_vct_num; i++)
 	{
@@ -374,38 +470,38 @@ int koetter_interpolation_hermitian()
 {
 	poly_init();
 #if (0 == CFG_RET)	
-	//poly_dev_test(recv_poly);
-	
-	koetter_intp_her_lcc(recv_poly,
-						 0,
-						 intp_poly_coef,
-						 min_intp_poly);
+	poly_dev_test(recv_poly);
 #else
-	//poly_dev_test(ret_trans_cwd);
-	
-	koetter_intp_her_lcc(ret_trans_cwd,
-						 0,
-						 intp_poly_coef,
-						 min_intp_poly);
+	poly_dev_test(ret_trans_cwd);
 #endif
 
 #if (1 == CFG_FAC_FREE)
+
 #if (1 == CFG_RET)
-	ret_fac_free(q0_poly_coef, q1_poly_coef, v_poly);
-	ret_cwd_recover();
-	cwd2msg(est_cwd_poly, est_msg_poly);
+	//ret_fac_free(q0_poly_coef, q1_poly_coef, v_poly);
+	//ret_cwd_recover();
+	//cwd2msg(est_cwd_poly, est_msg_poly);
+
+	her_fac(min_intp_poly, est_msg_poly, est_cwd_poly);
 #else
-	factorization_free();
+	//factorization_free();
+
+	her_fac(min_intp_poly, est_msg_poly, est_cwd_poly);
 #endif
+
 #else
+
 #if (1 == CFG_RET)
-	factorization_recur(min_intp_poly, ret_est_msg);
-	ret_cwd_recover();
+	//factorization_recur(min_intp_poly, ret_est_msg);
+	//ret_cwd_recover();
+
+	her_fac(min_intp_poly, est_msg_poly, est_cwd_poly);
 #else
 	//factorization_recur(min_intp_poly, est_msg_poly);
 	
 	her_fac(min_intp_poly, est_msg_poly, est_cwd_poly);
-#endif	
+#endif
+
 #endif
 
 	return 0;
@@ -762,12 +858,12 @@ int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd)
 		DEBUG_IMPORTANT("cwd_ok\n");
 		if(GF_Q > min_intp_idx)
 		{
-			DEBUG_SYS("min_intp_idx: %ld\n", min_intp_idx);
+			DEBUG_IMPORTANT("min_intp_idx: %ld\n", min_intp_idx);
 		}
 	}
 	else
 	{
-		err_cnt++;
+		//err_cnt++;
 		genus = GF_Q * (GF_Q - 1) / 2;
 		radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
 		for(i = 0; i < CODEWORD_LEN; i++)
@@ -872,7 +968,7 @@ int check_result_msg(unsigned char *msg, unsigned char *est_msg)
 	}
 	else
 	{
-		err_cnt++;
+		//err_cnt++;
 		genus = GF_Q * (GF_Q - 1) / 2;
 		radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
 		for(i = 0; i < CODEWORD_LEN; i++)
@@ -928,7 +1024,9 @@ int check_result_msg(unsigned char *msg, unsigned char *est_msg)
 }
 
 int koetter_intp_her_lcc(unsigned char *test_poly_seq,
+							 long long tv_idx,
                              long long intp_start_idx,
+                             long long intp_end_idx,
                              unsigned char input_poly[][MAX_POLY_TERM_SIZE],
                              unsigned char *output_poly)
 {
@@ -938,6 +1036,7 @@ int koetter_intp_her_lcc(unsigned char *test_poly_seq,
 	long long min_idx = -1, min_degree = 65536, degree_val = 0, tmp_val = 0;
 	unsigned char z_flag = 0;
 	long long intp_idx = 0;
+	long long l_idx = 0, p_idx = 0;
 
 	/*intp_poly_tmp is used to store intp. med. result here*/
 	for(i = 0; i < KOT_INTP_POLY_NUM; i++)
@@ -946,7 +1045,8 @@ int koetter_intp_her_lcc(unsigned char *test_poly_seq,
 		memcpy(intp_poly_tmp[i], input_poly[i], sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
 	}
 
-	for(i = intp_start_idx; i < CODEWORD_LEN; i++)
+	//for(i = intp_start_idx; i < CODEWORD_LEN; i++)
+	for(i = intp_start_idx; i <= intp_end_idx; i++)
 	{
 		intp_idx = chnl_rel_order_idx[CODEWORD_LEN - 1 - i];
 
@@ -1082,6 +1182,15 @@ int koetter_intp_her_lcc(unsigned char *test_poly_seq,
 				min_idx = j;
 			}
 		}
+		
+		if(i > (CODEWORD_LEN - 1 - ETA))
+		{
+			l_idx = i - (CODEWORD_LEN - 1 - ETA);
+			p_idx = tv_idx / ((long long)(pow(2, ETA - l_idx)));
+			kot_node_save(input_poly, l_idx, p_idx);
+		}
+		intp_cnt++;
+		DEBUG_NOTICE("intp: %ld | %ld\n", tv_idx, intp_cnt);
 	}
 
 #if 0
@@ -1152,10 +1261,8 @@ int fac_msg2cwd(unsigned char *msg,
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
 		cwd[i] = gf_add(cwd[i], ret_cwd_poly[i]);
-		DEBUG_NOTICE("ret_est_cwd: %ld | %x %x | %x\n",
-		             i,
-		             cwd[i]);
 	}
+	cwd2msg(cwd, msg);
 #endif
 
 	return 0;
@@ -1322,7 +1429,7 @@ int her_ret_fac_free(unsigned char *q0_poly,
 	}
 	if(1 == q0_all_zero)
 	{
-		memset(ret_est_cwd, 0xFF, sizeof(unsigned char) * CODEWORD_LEN);
+		memset(output_cwd, 0xFF, sizeof(unsigned char) * CODEWORD_LEN);
 
 		return 2;
 	}
@@ -1334,7 +1441,7 @@ int her_ret_fac_free(unsigned char *q0_poly,
 		{
 			if(0xFF == v_val[i])
 			{
-				ret_est_cwd[i] = 0xFF;
+				output_cwd[i] = 0xFF;
 			}
 			else
 			{
@@ -1342,12 +1449,12 @@ int her_ret_fac_free(unsigned char *q0_poly,
 
 				if(0xFF == q0_val)
 				{
-					ret_est_cwd[i] = 0xFF;
+					output_cwd[i] = 0xFF;
 				}
 				else
 				{
-					ret_est_cwd[i] = gf_multp(v_val[i], q0_val);
-					ret_est_cwd[i] = gf_div(ret_est_cwd[i], q1_val);
+					output_cwd[i] = gf_multp(v_val[i], q0_val);
+					output_cwd[i] = gf_div(output_cwd[i], q1_val);
 				}
 			}
 		}
@@ -1355,9 +1462,9 @@ int her_ret_fac_free(unsigned char *q0_poly,
 		{
 			if(0xFF == v_val[i])
 			{
-				ret_est_cwd[i] = ret_fac_free_dev(i, dev_init_flag, 1);
+				output_cwd[i] = ret_fac_free_dev(i, dev_init_flag, 1);
 				q0_val = poly_eva_x_y(q0_poly, af_pnt[i][0], af_pnt[i][1]);
-				ret_est_cwd[i] = gf_multp(ret_est_cwd[i], q0_val);
+				output_cwd[i] = gf_multp(output_cwd[i], q0_val);
 				dev_init_flag = 1;
 			}
 			else
@@ -1365,14 +1472,14 @@ int her_ret_fac_free(unsigned char *q0_poly,
 				q0_val = poly_eva_x_y(q0_poly, af_pnt[i][0], af_pnt[i][1]);
 				if(0xFF != q0_val)
 				{
-					ret_est_cwd[i] = 0xFF;
+					output_cwd[i] = 0xFF;
 
 					return 1;
 				}
 				else
 				{
-					ret_est_cwd[i] = ret_fac_free_dev(i, dev_init_flag, 0);
-					ret_est_cwd[i] = gf_multp(ret_est_cwd[i], v_val[i]);
+					output_cwd[i] = ret_fac_free_dev(i, dev_init_flag, 0);
+					output_cwd[i] = gf_multp(output_cwd[i], v_val[i]);
 					dev_init_flag = 1;
 				}
 			}
@@ -1391,7 +1498,7 @@ int her_ret_fac_free(unsigned char *q0_poly,
 				     q0_val,
 				     q1_val,
 				     v_val[i],
-				     ret_est_cwd[i]);
+				     output_cwd[i]);
 #if (1 == TEST_MODE)
 		for(j = 0; j < CODEWORD_LEN; j++)
 		{
@@ -1462,12 +1569,488 @@ int her_fac(unsigned char *poly,
 		             est_cwd[i]);
 	}
 #endif
-	
+
 	cwd2msg(est_cwd, est_msg);
 #else
+
 	factorization_recur(poly, est_msg);
 	fac_msg2cwd(est_msg, est_cwd);
+
 #endif
+
+	return 0;
+}
+
+int kot_node_init()
+{
+	long long i = 0, j = 0;
+	node_num = 0;
+	for(i = 0; i <= ETA; i++)
+	{
+		node_num = node_num + (long long)(pow(2, i));
+	}
+	DEBUG_NOTICE("node_num: %ld\n", node_num);
+
+	node_poly = (unsigned char***)malloc(sizeof(unsigned char**) * node_num);
+	for(i = 0; i < node_num; i++)
+	{
+		node_poly[i] = (unsigned char**)malloc(sizeof(unsigned char*) * KOT_INTP_POLY_NUM);
+		for(j = 0; j < KOT_INTP_POLY_NUM; j++)
+		{
+			node_poly[i][j] = (unsigned char*)malloc(sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		}
+	}
+
+	for(i = 0; i < node_num; i++)
+	{
+		for(j = 0; j < KOT_INTP_POLY_NUM; j++)
+		{
+			memset(node_poly[i][j], 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		}
+	}
+
+	node_tore_flag = (unsigned char*)malloc(sizeof(unsigned char) * node_num);
+	memset(node_tore_flag, 0, sizeof(unsigned char) * node_num);
+
+	return 0;
+}
+
+int kot_node_exit()
+{
+	long long i = 0, j = 0;
+
+	for(i = 0; i < node_num; i++)
+	{
+		for(j = 0; j < KOT_INTP_POLY_NUM; j++)
+		{
+			free(node_poly[i][j]);
+			node_poly[i][j] = NULL;
+		}
+		free(node_poly[i]);
+		node_poly[i] = NULL;
+	}
+	free(node_poly);
+	node_poly = NULL;
+
+	free(node_tore_flag);
+	node_tore_flag = NULL;
+
+	return 0;
+}
+
+int kot_node_clear()
+{
+	long long i = 0, j = 0;
+
+	for(i = 0; i < node_num; i++)
+	{
+		for(j = 0; j < KOT_INTP_POLY_NUM; j++)
+		{
+			memset(node_poly[i][j], 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		}
+	}
+
+	memset(node_tore_flag, 0, sizeof(unsigned char) * node_num);
+
+	return 0;
+}
+
+long long kot_node_layer_get(long long node_idx)
+{
+	long long i = 0;
+	long long layer_idx = 0;
+	long long tmp_val_left = 0, tmp_val_right = 0;
+
+	for(i = 0; i < ETA; i++)
+	{
+		tmp_val_left = (long long)(pow(2, i)) - 1;
+		tmp_val_right = tmp_val_left + (long long)(pow(2, i)) - 1;
+
+		if((tmp_val_left <= node_idx)
+			&& (tmp_val_right >= node_idx))
+		{
+			layer_idx = i;
+			break;
+		}
+	}
+
+	return layer_idx;
+}
+
+long long kot_node_place_get(long long node_idx)
+{
+	long long i = 0;
+	long long place_idx = 0;
+	long long tmp_val_left = 0, tmp_val_right = 0;
+
+	for(i = 0; i < ETA; i++)
+	{
+		tmp_val_left = (long long)(pow(2, i)) - 1;
+		tmp_val_right = tmp_val_left + (long long)(pow(2, i)) - 1;
+
+		if((tmp_val_left <= node_idx)
+			&& (tmp_val_right >= node_idx))
+		{
+			place_idx = node_idx - tmp_val_left;
+			break;
+		}
+	}
+
+	return place_idx;
+}
+
+int kot_node_save(unsigned char poly[][MAX_POLY_TERM_SIZE], long long layer_idx, long long place_idx)
+{
+	long long i = 0;
+	long long node_idx = 0;
+
+	node_idx = (long long)(pow(2, layer_idx)) - 1 + place_idx;
+	DEBUG_NOTICE("kot_node_save: %ld %ld | %ld | %d\n",
+	             layer_idx,
+	             place_idx,
+	             node_idx,
+	             node_tore_flag[node_idx]);
+	
+	if(0 == node_tore_flag[node_idx])
+	{
+		for(i = 0; i < KOT_INTP_POLY_NUM; i++)
+		{
+			memcpy(node_poly[node_idx][i], poly[i], sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		}
+		node_tore_flag[node_idx] = 1;
+		DEBUG_NOTICE("kot_node_save_OK: %ld %ld | %ld | %d\n",
+	             	layer_idx,
+	             	place_idx,
+	             	node_idx,
+	             	node_tore_flag[node_idx]);
+	}
+
+	return 0;
+}
+
+long long kot_node_load(unsigned char poly[][MAX_POLY_TERM_SIZE], long long tv_idx)
+{
+	long long i = 0;
+	long long l_idx = 0, p_idx = 0, node_idx = 0;
+	long long div_num = 0;
+
+	for(l_idx = ETA - 1; l_idx > 0; l_idx--)
+	{
+		div_num = (long long)(pow(2, (ETA - l_idx)));
+
+		p_idx = tv_idx / div_num;
+		node_idx = (long long)(pow(2, l_idx)) - 1 + p_idx;
+		if(0 != node_tore_flag[node_idx])
+		{
+			for(i = 0; i < KOT_INTP_POLY_NUM; i++)
+			{
+				memcpy(poly[i], node_poly[node_idx][i], sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+			}
+			DEBUG_NOTICE("kot_node_load_OK: %ld %ld | %ld | %ld\n",
+			             l_idx,
+			             p_idx,
+			             node_idx,
+			             tv_idx);
+			break;
+		}
+	}
+
+	return l_idx;
+}
+
+int her_lcc_tv_init(long long tv_idx)
+{
+	poly_init();
+
+	return 0;
+}
+
+int her_lcc_tv_process(long long tv_idx)
+{
+	long long layer_idx = 0;
+
+	her_lcc_tv_init(tv_idx);
+
+	//layer_idx = kot_node_load(intp_poly_coef, tv_idx);
+
+#if (1 == CFG_RET)
+	koetter_intp_her_lcc(ret_tst_vct[tv_idx],
+						 tv_idx,
+						 layer_idx,
+						 CODEWORD_LEN - 1,
+						 intp_poly_coef,
+						 min_intp_poly);
+#else
+	koetter_intp_her_lcc(tst_vct[tv_idx],
+						 tv_idx,
+						 layer_idx,
+						 CODEWORD_LEN - 1,
+						 intp_poly_coef,
+						 min_intp_poly);
+#endif
+
+	her_fac(min_intp_poly, tv_est_msg[tv_idx], tv_est_cwd[tv_idx]);
+
+#if (1 == TEST_MODE)
+	long long i = 0;
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		DEBUG_NOTICE("est_cwd: %ld | %ld | %x %x\n",
+					 tv_idx,
+					 i,
+					 tv_est_cwd[tv_idx][i],
+					 cwd_poly[i]);
+	}
+#endif
+
+	return 0;
+}
+
+int check_result_tv(unsigned char *tv, unsigned char *est_cwd, unsigned char *est_msg)
+{
+	long long i = 0;
+	long long genus = 0, radius = 0, cwd_err = 0, msg_err = 0, tv_diff = 0;
+	int val = 0;
+
+	for(i = 0; i < MESSAGE_LEN; i++)
+	{
+		if(msg_poly[i] != est_msg[i])
+		{
+			DEBUG_IMPORTANT("check_result_msg: %ld | %x %x\n",
+			               i,
+			               msg_poly[i],
+			               est_msg[i]);
+			msg_err++;
+		}
+	}
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		if(cwd_poly[i] != est_cwd[i])
+		{
+			DEBUG_IMPORTANT("check_result_cwd: %ld | %x %x\n",
+			               i,
+			               cwd_poly[i],
+			               est_cwd[i]);
+			cwd_err++;
+		}
+	}
+
+	if((0 == msg_err)
+		&& (0 == cwd_err))
+	{
+		DEBUG_IMPORTANT("dec_ok\n");
+		val = 0;
+	}
+	else
+	{
+		genus = GF_Q * (GF_Q - 1) / 2;
+		radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
+		for(i = 0; i < CODEWORD_LEN; i++)
+		{
+			if(cwd_poly[i] != tv[i])
+			{
+				tv_diff++;
+			}
+		}
+		if(tv_diff > radius)
+		{
+			val = 1;
+			DEBUG_IMPORTANT("err_out_of_radius: %ld %ld\n",
+			                tv_diff,
+			          	    radius);
+		}
+		else
+		{
+			val = 2;
+			DEBUG_SYS("msg decoding err: %ld %ld\n",
+			          tv_diff,
+			          radius);
+			for(i = 0; i < MESSAGE_LEN; i++)
+			{
+				DEBUG_SYS("check_result_msg_err: %ld | %x %x\n",
+				          i,
+				          msg_poly[i],
+				          est_msg[i]);
+			}
+			for(i = 0; i < CODEWORD_LEN; i++)
+			{
+				DEBUG_SYS("check_result_cwd_err: %ld | %x %x\n",
+			              i,
+			              cwd_poly[i],
+			              est_cwd[i]);
+			}
+		}
+	}
+
+	return val;
+}
+
+int her_lcc_check_result()
+{
+	long long i = 0;
+	unsigned char err_this_frame = 1;
+	int cwd_err_val = CODEWORD_LEN, msg_err_val = MESSAGE_LEN;
+	int check_val = 0;
+	
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		cwd_err_val = CODEWORD_LEN;
+		msg_err_val = MESSAGE_LEN;
+
+		cwd_err_val = check_result_cwd(cwd_poly, tv_est_cwd[i]);
+		msg_err_val = check_result_msg(msg_poly, tv_est_msg[i]);
+		if((0 == cwd_err_val)
+			&& (0 == msg_err_val))
+		{
+			err_this_frame = 0;
+			DEBUG_NOTICE("dec_suc_tv: %ld\n", i);
+			break;
+		}
+	}
+	if(0 != err_this_frame)
+	{
+		err_cnt++;
+	}
+
+#if (1 == TEST_MODE)
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		check_val = check_result_tv(tst_vct[i], tv_est_cwd[i], tv_est_msg[i]);
+		DEBUG_NOTICE("dec_tv_check: %ld | %ld | %ld\n", i, tv_err[i], check_val);
+	}
+#endif
+
+	return 0;
+}
+
+int her_cmm_intp()
+{
+	long long i = 0, j = 0;
+
+	for(i = 0; i < KOT_INTP_POLY_NUM; i++)
+	{
+		memset(cmm_intp_poly[i], 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+	}
+
+	poly_init();
+
+#if (1 == CFG_RET)
+	koetter_intp_her_lcc(ret_tst_vct[0],
+						 0,
+						 keep_cnt,//notice this
+						 CODEWORD_LEN - 1 - ETA,
+						 intp_poly_coef,
+						 min_intp_poly);
+#else
+	koetter_intp_her_lcc(tst_vct[0],
+						 0,
+						 0,
+						 CODEWORD_LEN - 1 - ETA,
+						 intp_poly_coef,
+						 min_intp_poly);
+#endif
+
+	for(i = 0; i < KOT_INTP_POLY_NUM; i++)
+	{
+		memcpy(cmm_intp_poly[i], intp_poly_coef[i], sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+	}
+	memcpy(cmm_intp_poly_degree, intp_poly_degree, sizeof(long long) * KOT_INTP_POLY_NUM);
+
+#if (1 == TEST_MODE)
+	for(i = 0; i < KOT_INTP_POLY_NUM; i++)
+	{
+		for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
+		{
+			if(0xFF != cmm_intp_poly[i][j])
+			{
+				DEBUG_NOTICE("cmm_intp_poly: %ld | %ld %ld %ld | %ld | %x\n",
+							 i,
+							 x_term_degree_table[j],
+							 y_term_degree_table[j],
+							 z_term_degree_table[j],
+							 cmm_intp_poly_degree[i],
+							 cmm_intp_poly[i][j]);
+			}
+		}
+	}
+#endif
+
+	return 0;
+}
+
+int her_ucm_proc(long long tv_idx)
+{
+	long long i = 0;
+	long long layer_idx = CODEWORD_LEN - 1 - ETA + 1;
+
+	poly_init();
+	for(i = 0; i < KOT_INTP_POLY_NUM; i++)
+	{
+		memcpy(intp_poly_coef[i], cmm_intp_poly[i], sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+	}
+	memcpy(intp_poly_degree, cmm_intp_poly_degree, sizeof(long long) * KOT_INTP_POLY_NUM);
+
+	/*load*/
+	layer_idx = kot_node_load(intp_poly_coef, tv_idx);
+	layer_idx = layer_idx + (CODEWORD_LEN - 1 - ETA) + 1;
+	//layer_idx = 0;
+
+#if (1 == CFG_RET)
+	koetter_intp_her_lcc(ret_tst_vct[tv_idx],
+						 tv_idx,
+						 layer_idx,
+						 CODEWORD_LEN - 1,
+						 intp_poly_coef,
+						 min_intp_poly);
+#else
+	koetter_intp_her_lcc(tst_vct[tv_idx],
+						 tv_idx,
+						 layer_idx,
+						 CODEWORD_LEN - 1,
+						 intp_poly_coef,
+						 min_intp_poly);
+#endif
+
+	her_fac(min_intp_poly, tv_est_msg[tv_idx], tv_est_cwd[tv_idx]);
+
+#if (1 == TEST_MODE)
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		DEBUG_NOTICE("est_cwd: %ld | %ld | %x %x\n",
+					 tv_idx,
+					 i,
+					 tv_est_cwd[tv_idx][i],
+					 cwd_poly[i]);
+	}
+	for(i = 0; i < MESSAGE_LEN; i++)
+	{
+		DEBUG_NOTICE("est_msg: %ld | %ld | %x %x\n",
+					 tv_idx,
+					 i,
+					 tv_est_msg[tv_idx][i],
+					 msg_poly[i]);
+	}
+#endif
+
+	return 0;
+}
+
+int her_lcc_dec()
+{
+	long long i = 0;
+
+	kot_node_clear();
+
+	her_cmm_intp();
+
+	intp_cnt = 0;
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		her_ucm_proc(i);
+	}
+	DEBUG_NOTICE("intp_cnt: %ld\n", intp_cnt);
+
+	her_lcc_check_result();
 
 	return 0;
 }

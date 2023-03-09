@@ -10,7 +10,7 @@ extern long long z_term_degree_table[MAX_POLY_TERM_SIZE];
 extern unsigned char intp_poly_coef[KOT_INTP_POLY_NUM][MAX_POLY_TERM_SIZE];
 extern unsigned char intp_poly_tmp[KOT_INTP_POLY_NUM][MAX_POLY_TERM_SIZE];
 extern unsigned char q0_poly_coef[MAX_POLY_TERM_SIZE], q1_poly_coef[MAX_POLY_TERM_SIZE];
-extern unsigned char intp_poly_degree[KOT_INTP_POLY_NUM];
+extern long long intp_poly_degree[KOT_INTP_POLY_NUM];
 extern unsigned char min_intp_poly[MAX_POLY_TERM_SIZE];
 extern long long min_intp_idx;
 

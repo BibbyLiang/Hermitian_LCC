@@ -28,13 +28,15 @@ void init_simulation()
 void main()
 {
 	long long i = 0;
-	long long sim_cnt = 1, monitor_cnt = 1;
+	long long sim_cnt = 10, monitor_cnt = 1;
+	int err_msg = 0, err_cwd = 0;
 
 	init_simulation();
 
 	mod_init();
 	tst_vct_num_cal();
 	tst_vct_init();
+	kot_node_init();
 	
 	affine_points_cal();
 	term_degree_table_init();
@@ -62,27 +64,45 @@ void main()
 		cnt_switch = 1;
 		start = clock();
 
+		tst_vct_form();
+
 #if (1 == CFG_RET)
 		re_encoding_transform();
 #endif
 
-		tst_vct_form();
-
-		koetter_interpolation_hermitian();
+		//koetter_interpolation_hermitian();
+		her_lcc_dec();
 
 		stop = clock();
 		runtime = runtime + (stop - start) / 1000.0000;
 		cnt_switch = 0;
 
+#if 0
 #if (1 == CFG_FAC_FREE)
-		check_result_cwd(cwd_poly, est_cwd_poly);
-		//check_result_msg(msg_poly, est_msg_poly);
+		err_cwd = check_result_cwd(cwd_poly, est_cwd_poly);
+		err_msg = check_result_msg(msg_poly, est_msg_poly);
 #else
+
 #if (0 == CFG_RET)
-		check_result_msg(msg_poly, est_msg_poly);
+		err_msg = check_result_msg(msg_poly, est_msg_poly);
 #else
-		check_result_cwd(cwd_poly, est_cwd_poly);
+		err_cwd = check_result_cwd(cwd_poly, est_cwd_poly);
 #endif
+
+#endif
+
+#else/*for GS decoding check*/
+
+#if 0
+	err_cwd = check_result_cwd(cwd_poly, est_cwd_poly);
+	err_msg = check_result_msg(msg_poly, est_msg_poly);
+	if((0 != err_cwd)
+		|| (0 != err_msg))
+	{
+		err_cnt++;
+	}
+#endif	
+
 #endif
 	}
 	DEBUG_SYS("sim: %ld, err: %ld\n", sim_cnt, err_cnt);

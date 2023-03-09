@@ -18,7 +18,7 @@ long long z_term_degree_table[MAX_POLY_TERM_SIZE];
 unsigned char intp_poly_coef[KOT_INTP_POLY_NUM][MAX_POLY_TERM_SIZE];
 unsigned char intp_poly_tmp[KOT_INTP_POLY_NUM][MAX_POLY_TERM_SIZE];
 unsigned char q0_poly_coef[MAX_POLY_TERM_SIZE], q1_poly_coef[MAX_POLY_TERM_SIZE];
-unsigned char intp_poly_degree[KOT_INTP_POLY_NUM];
+long long intp_poly_degree[KOT_INTP_POLY_NUM];//notice this unsigned char type
 unsigned char min_intp_poly[MAX_POLY_TERM_SIZE];
 long long min_intp_idx = -1;
 
@@ -245,7 +245,8 @@ long long poly_degree_cal(unsigned char *poly)
 				  + (GF_Q + 1) * pole_basis_pow[MESSAGE_LEN - 1][1];
 
 #if (1 == CFG_RET)
-	w_z = w_z - keep_cnt;
+	//w_z = w_z - keep_cnt;//notice this
+	w_z = w_z - ret_keep_sym_cnt;
 #endif
 
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
@@ -276,7 +277,8 @@ long long poly_z_degree_get(unsigned char *poly)
 				  + (GF_Q + 1) * pole_basis_pow[MESSAGE_LEN - 1][1];
 
 #if (1 == CFG_RET)
-	w_z = w_z - keep_cnt;
+	//w_z = w_z - keep_cnt;
+	w_z = w_z - ret_keep_sym_cnt;
 #endif
 
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)

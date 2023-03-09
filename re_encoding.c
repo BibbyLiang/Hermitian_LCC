@@ -14,9 +14,11 @@
 unsigned char lag_poly[CODEWORD_LEN][MAX_POLY_TERM_SIZE];
 unsigned char ret_poly[MAX_POLY_TERM_SIZE];
 unsigned char ret_cwd_poly[CODEWORD_LEN];
+unsigned char ret_msg_poly[MESSAGE_LEN];
 unsigned char keep_sym[CODEWORD_LEN];
 long long keep_flag[CODEWORD_LEN];
 long long keep_cnt = 0;
+long long ret_keep_sym_cnt = 0;
 unsigned char ret_trans_cwd[CODEWORD_LEN];
 unsigned char ret_est_msg[MESSAGE_LEN];
 unsigned char ret_est_cwd[CODEWORD_LEN];
@@ -44,7 +46,7 @@ int her_lagrange_poly_construct()
 		{
 			continue;
 		}
-#endif	
+#endif
 
 		memset(lag_poly[i], 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
 		memset(x_poly, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
@@ -481,6 +483,35 @@ int ret_trans()
 	return 0;
 }
 
+int ret_tv_trans()
+{
+	long long i = 0, j = 0;
+
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		for(j = 0; j < CODEWORD_LEN; j++)
+		{
+			if(1 == keep_flag[j])
+			{
+				ret_tst_vct[i][j] = 0xFF;
+			}
+			else
+			{
+				ret_tst_vct[i][j] = gf_add(tst_vct[i][j], ret_cwd_poly[j]);
+				ret_tst_vct[i][j] = gf_div(ret_tst_vct[i][j], v_val[j]);
+			}
+			DEBUG_NOTICE("tv_trans: %ld %ld | %x %x | %x\n",
+			             i,
+			             j,
+			             tst_vct[i][j],
+			             ret_cwd_poly[j],
+			             ret_tst_vct[i][j]);
+		}
+	}
+
+	return 0;
+}
+
 int ret_cwd_recover()
 {
 	long long i = 0;
@@ -618,6 +649,7 @@ int keep_position_set(long long *keep_poition)
 
 	memset(keep_poition, 0, sizeof(long long) * CODEWORD_LEN);
 	keep_cnt = 0;
+	ret_keep_sym_cnt = 0;
 
 	for(i = 0; i < (CODEWORD_LEN - ETA); i++)
 	{
@@ -670,6 +702,79 @@ int keep_position_set(long long *keep_poition)
 		DEBUG_NOTICE("keep_poition: %ld | %ld %ld\n", i, keep_cnt, keep_poition[i]);
 	}
 #endif
+
+#if 1/*re-order intp_seq*/
+	float *rel_order;
+	long long *rel_order_idx;
+	float *unrel_order;
+	long long *unrel_order_idx;
+	rel_order = (float*)malloc(sizeof(float) * keep_cnt);
+	rel_order_idx = (long long*)malloc(sizeof(long long) * keep_cnt);
+	unrel_order = (float*)malloc(sizeof(float) * (CODEWORD_LEN - keep_cnt));
+	unrel_order_idx = (long long*)malloc(sizeof(long long) * (CODEWORD_LEN - keep_cnt));
+	tmp_cnt = 0;
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		if(1 == keep_flag[chnl_rel_order_idx[i]])
+		{
+			rel_order[tmp_cnt] = chnl_rel_order[i];
+			rel_order_idx[tmp_cnt] = chnl_rel_order_idx[i];
+			DEBUG_NOTICE("rel_sel: %ld | %ld | %f %ld\n",
+			             tmp_cnt,
+			             i,
+			             rel_order[tmp_cnt],
+			             rel_order_idx[tmp_cnt]);
+			tmp_cnt++;
+		}
+	}
+	BubbleSort4(rel_order, (int)keep_cnt, rel_order_idx);
+	tmp_cnt = 0;
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		if(0 == keep_flag[chnl_rel_order_idx[i]])
+		{
+			unrel_order[tmp_cnt] = chnl_rel_order[i];
+			unrel_order_idx[tmp_cnt] = chnl_rel_order_idx[i];
+			DEBUG_NOTICE("unrel_sel: %ld | %ld | %f %ld\n",
+			             tmp_cnt,
+			             i,
+			             unrel_order[tmp_cnt],
+			             unrel_order_idx[tmp_cnt]);
+			tmp_cnt++;
+		}
+	}
+	BubbleSort4(unrel_order, (int)(CODEWORD_LEN - keep_cnt), unrel_order_idx);
+	tmp_cnt = 0;
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		if((CODEWORD_LEN - keep_cnt) > tmp_cnt)
+		{
+			chnl_rel_order[i] = unrel_order[i];
+			chnl_rel_order_idx[i] = unrel_order_idx[i];
+		}
+		else
+		{
+			chnl_rel_order[i] = rel_order[i - (CODEWORD_LEN - keep_cnt)];
+			chnl_rel_order_idx[i] = rel_order_idx[i - (CODEWORD_LEN - keep_cnt)];
+		}
+		DEBUG_NOTICE("re-order chnl_rel_order_idx: %ld %f %ld\n",
+					 i,
+					 chnl_rel_order[i],
+		             chnl_rel_order_idx[i]);
+		tmp_cnt++;
+	}
+	free(rel_order);
+	rel_order = NULL;
+	free(rel_order_idx);
+	rel_order_idx = NULL;
+	free(unrel_order);
+	unrel_order = NULL;
+	free(unrel_order_idx);
+	unrel_order_idx = NULL;
+#endif
+
+	ret_keep_sym_cnt = keep_cnt;//notice this
+
 	return 0;
 }
 
@@ -1386,6 +1491,7 @@ int re_encoding_transform()
 	ret_cwd_gen();
 #endif
 	ret_trans();
+	ret_tv_trans();
 
 	return 0;
 }
