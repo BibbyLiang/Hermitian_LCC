@@ -5,6 +5,7 @@
 #include "gf_cal.h"
 #include "encoding.h"
 #include "rnd.h"
+#include "channel.h"
 #include "mod.h"
 #include "time.h"
 #include "interpolation.h"
@@ -25,11 +26,51 @@ void init_simulation()
 	return;
 }
 
+void clear_sim()
+{
+	runtime = 0;
+	err_cnt = 0;
+	gf_count_reset();
+#if (1 == DEV_RECORD)	
+	dev_1_avg_cnt = 0;
+	dev_2_avg_cnt = 0;
+	dev_out_cnt = 0;
+#endif	
+}
+
 void main()
 {
 	long long i = 0;
-	long long sim_cnt = 10, monitor_cnt = 1;
+	long long sim_cnt = 1, monitor_cnt = 1;
+	float eb2n0_start = 5, eb2n0_stop = 5, eb2n0_step = 1;
+
 	int err_msg = 0, err_cwd = 0;
+
+#if (0 == TEST_MODE)
+	printf("Please Input Eb/N0 Start: ");
+	scanf("%f", &eb2n0_start);
+	printf("Please Input Eb/N0 Stop: ");
+	scanf("%f", &eb2n0_stop);
+	printf("Please Input Eb/N0 Step: ");
+	scanf("%f", &eb2n0_step);
+	printf("Please Input Simulation Times: ");
+	scanf("%ld", &sim_cnt);
+	printf("Please Monitor Times: ");
+	scanf("%ld", &monitor_cnt);
+#endif
+
+#if (1 == OUTPUT_LOG)
+	/*init file log*/
+	sprintf(log_name, "n_%d-k_%d-eta_%d-snr_%f_%f_%f-cnt_%ld_%ld.txt",
+					  CODEWORD_LEN,
+					  MESSAGE_LEN,
+					  ETA,
+					  eb2n0_start,
+					  eb2n0_step,
+					  eb2n0_stop,
+					  sim_cnt,
+					  monitor_cnt);
+#endif
 
 	init_simulation();
 
@@ -46,47 +87,83 @@ void main()
 #endif
 	recover_lag_poly_init();
 
-	for(i = 0; i < sim_cnt; i++)
+	for(eb2n0 = eb2n0_start; eb2n0 <= eb2n0_stop; eb2n0 = eb2n0 + eb2n0_step)
 	{
-		if((0 == (i % monitor_cnt))
-			&& (0 != i))
+		clear_sim();
+
+		for(i = 0; i < sim_cnt; i++)
 		{
-			DEBUG_SYS("sim: %ld / %ld, err: %ld\n", i, sim_cnt, err_cnt);
-			DEBUG_SYS("Decoding Complexity: %f %f\n", (float)(add_cnt / i), (float)((mul_cnt + div_cnt) / i));
-			DEBUG_SYS("Decoding Measured Time: %f\n", runtime / ((float)i));
-		}
+#if (1 == EARLY_TERMINATION)
+			if(ET_NUM <= err_cnt)
+			{
+				break;
+			}
+#endif
+		
+			if((0 == (i % monitor_cnt))
+				&& (0 != i))
+			{
+				DEBUG_SYS("Eb/N0: %f dB\n", eb2n0);
+				DEBUG_SYS("sim: %ld / %ld, err: %ld\n", i, sim_cnt, err_cnt);
+				DEBUG_SYS("Decoding Complexity: %f %f\n", (float)(add_cnt / i), (float)((mul_cnt + div_cnt) / i));
+				DEBUG_SYS("Decoding Measured Time: %f\n", runtime / ((float)i));
 
-		rnd_msg_gen();
-		her_encoding(msg_poly, cwd_poly);
-		trans_over_chnl();
-		chnl_rel_cal(recv_seq, symbol_num);
-
-		cnt_switch = 1;
-		start = clock();
-
-		tst_vct_form();
-
-#if (1 == CFG_RET)
-		re_encoding_transform();
+#if (1 == DEV_RECORD)
+				DEBUG_SYS("dev_1_avg_cnt: %f\n", (float)(dev_1_avg_cnt) / i);
+				DEBUG_SYS("dev_2_avg_cnt: %f\n", (float)(dev_2_avg_cnt) / i);
+				DEBUG_SYS("dev_out_cnt: %ld\n", dev_out_cnt);			
 #endif
 
-		//koetter_interpolation_hermitian();
-		her_lcc_dec();
+#if (1 == OUTPUT_LOG)
+				frc = fopen(log_name, "a+");
+				fprintf(frc, "---------------------\n");
+				fprintf(frc, "Eb/N0: %f dB\n", eb2n0);
+				fprintf(frc, "sim: %ld / %ld, err: %ld\n", i, sim_cnt, err_cnt);
+				fprintf(frc, "Decoding Complexity: %f %f\n", (float)(add_cnt / i), (float)((mul_cnt + div_cnt) / i));
+				fprintf(frc, "Decoding Measured Time: %f\n", runtime / ((float)i));
 
-		stop = clock();
-		runtime = runtime + (stop - start) / 1000.0000;
-		cnt_switch = 0;
+#if (1 == DEV_RECORD)
+				fprintf(frc, "dev_1_avg_cnt: %f\n", (float)(dev_1_avg_cnt) / i);
+				fprintf(frc, "dev_2_avg_cnt: %f\n", (float)(dev_2_avg_cnt) / i);
+				fprintf(frc, "dev_out_cnt: %ld\n", dev_out_cnt);
+#endif
+
+				fclose(frc);
+				frc = NULL;
+#endif
+			}
+
+			rnd_msg_gen();
+			her_encoding(msg_poly, cwd_poly);
+			trans_over_chnl();
+			chnl_rel_cal(recv_seq, symbol_num);
+
+			cnt_switch = 1;
+			start = clock();
+
+			tst_vct_form();
+
+#if (1 == CFG_RET)
+			re_encoding_transform();
+#endif
+
+			//koetter_interpolation_hermitian();
+			her_lcc_dec();
+
+			stop = clock();
+			runtime = runtime + (stop - start) / 1000.0000;
+			cnt_switch = 0;
 
 #if 0
 #if (1 == CFG_FAC_FREE)
-		err_cwd = check_result_cwd(cwd_poly, est_cwd_poly);
-		err_msg = check_result_msg(msg_poly, est_msg_poly);
+			err_cwd = check_result_cwd(cwd_poly, est_cwd_poly);
+			err_msg = check_result_msg(msg_poly, est_msg_poly);
 #else
 
 #if (0 == CFG_RET)
-		err_msg = check_result_msg(msg_poly, est_msg_poly);
+			err_msg = check_result_msg(msg_poly, est_msg_poly);
 #else
-		err_cwd = check_result_cwd(cwd_poly, est_cwd_poly);
+			err_cwd = check_result_cwd(cwd_poly, est_cwd_poly);
 #endif
 
 #endif
@@ -94,23 +171,39 @@ void main()
 #else/*for GS decoding check*/
 
 #if 0
-	err_cwd = check_result_cwd(cwd_poly, est_cwd_poly);
-	err_msg = check_result_msg(msg_poly, est_msg_poly);
-	if((0 != err_cwd)
-		|| (0 != err_msg))
-	{
-		err_cnt++;
-	}
+		err_cwd = check_result_cwd(cwd_poly, est_cwd_poly);
+		err_msg = check_result_msg(msg_poly, est_msg_poly);
+		if((0 != err_cwd)
+			|| (0 != err_msg))
+		{
+			err_cnt++;
+		}
 #endif	
 
 #endif
+		}
+
+		DEBUG_SYS("*********************************\n");
+		DEBUG_SYS("Eb/N0: %f dB\n", eb2n0);
+		DEBUG_SYS("sim: %ld, err: %ld\n", i, err_cnt);
+		DEBUG_SYS("Decoding Complexity: %f %f\n", (float)(add_cnt / i), (float)((mul_cnt + div_cnt) / i));
+		DEBUG_SYS("Decoding Measured Time: %f\n", runtime / ((float)i));
+		DEBUG_SYS("*********************************\n");
+#if (1 == OUTPUT_LOG)
+		frc = fopen(log_name, "a+");
+		fprintf(frc, "*********************************\n");
+		fprintf(frc, "Eb/N0: %f dB\n", eb2n0);
+		fprintf(frc, "sim: %ld, err: %ld\n", i, err_cnt);
+		fprintf(frc, "Decoding Complexity: %f %f\n", (float)(add_cnt / i), (float)((mul_cnt + div_cnt) / i));
+		fprintf(frc, "Decoding Measured Time: %f\n", runtime / ((float)i));
+		fprintf(frc, "*********************************\n");
+		fclose(frc);
+		frc = NULL;
+#endif
 	}
-	DEBUG_SYS("sim: %ld, err: %ld\n", sim_cnt, err_cnt);
-	DEBUG_SYS("Decoding Complexity: %f %f\n", (float)(add_cnt / sim_cnt), (float)((mul_cnt + div_cnt) / sim_cnt));
-	DEBUG_SYS("Decoding Measured Time: %f\n", runtime / ((float)sim_cnt));
 
 	tst_vct_exit();
 	mod_exit();
-	
+
 	return;
 }

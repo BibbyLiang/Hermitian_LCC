@@ -3,6 +3,9 @@
 
 #include "cfg_decoding.h"
 
+extern FILE *frc;
+extern char log_name[255];
+
 extern clock_t start, stop;
 extern float runtime;
 extern long long err_cnt;
@@ -16,6 +19,10 @@ extern long long tst_vct_num;
 extern unsigned char **tst_vct;
 extern unsigned char **ret_tst_vct;
 
+extern long long dev_1_avg_cnt;
+extern long long dev_2_avg_cnt;
+extern long long dev_out_cnt;
+
 extern int chnl_rel_cal(float **input_seq, long long input_len);
 extern int tst_vct_num_cal();
 extern int tst_vct_init();
@@ -24,8 +31,8 @@ extern int tst_vct_form();
 extern int koetter_interpolation_hermitian();
 extern int recover_lag_poly_init();
 extern int cwd2msg(unsigned char *cwd, unsigned char *msg);
-extern int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd);
-extern int check_result_msg(unsigned char *msg, unsigned char *est_msg);
+extern int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd, long long tv_idx);
+extern int check_result_msg(unsigned char *msg, unsigned char *est_msg, long long tv_idx);
 extern int koetter_intp_her_lcc(unsigned char *test_poly_seq,
 									long long tv_idx,
                                 	long long intp_start_idx,

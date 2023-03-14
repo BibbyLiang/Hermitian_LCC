@@ -685,7 +685,7 @@ int keep_position_set(long long *keep_poition)
 		}
 	}
 
-#if (1 == FAC_FREE_ERR)
+#if 0//(1 == FAC_FREE_ERR)
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
 		keep_poition[i] = 0;
@@ -695,15 +695,17 @@ int keep_position_set(long long *keep_poition)
 		keep_poition[i] = 1;
 	}
 	keep_cnt = 32;
-#endif	
+#endif
+
 #if (1 == TEST_MODE)
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
 		DEBUG_NOTICE("keep_poition: %ld | %ld %ld\n", i, keep_cnt, keep_poition[i]);
 	}
 #endif
+	DEBUG_NOTICE("keep_cnt: %ld\n", keep_cnt);
 
-#if 1/*re-order intp_seq*/
+#if (0 == FAC_FREE_ERR)/*re-order intp_seq*/
 	float *rel_order;
 	long long *rel_order_idx;
 	float *unrel_order;
@@ -804,12 +806,18 @@ unsigned char ret_fac_free_dev(long long sym_idx, unsigned char dev_flag, unsign
 			v_val = poly_eva_x_y(store_v_dev, af_pnt[sym_idx][0], af_pnt[sym_idx][1]);
 			val = gf_div(v_val, q1_val);
 		}
+#if (1 == DEV_RECORD)
+		dev_1_avg_cnt++;
+#endif		
 	}
 	else
 	{
 		erasure_flag[sym_idx] = 1;
 		dev_to_flag[sym_idx] = 1;
 		DEBUG_NOTICE("erasure_check: %ld | %x %x\n", sym_idx, recv_poly[sym_idx], cwd_poly[sym_idx]);
+#if (1 == DEV_RECORD)
+		dev_2_avg_cnt++;
+#endif		
 	}
 
 	DEBUG_NOTICE("ret_fac_free_dev: %ld  %ld | %d %d | %x %x %x | %x\n",

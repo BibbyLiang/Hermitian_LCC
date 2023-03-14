@@ -4,6 +4,7 @@
 #include "cfg_decoding.h"
 
 extern long long dev_to_cnt;
+extern long long sing_era_cnt;
 extern unsigned char erasure_flag[CODEWORD_LEN];
 extern unsigned char dev_to_flag[CODEWORD_LEN];
 extern unsigned char store_q0_dev[MAX_POLY_TERM_SIZE];

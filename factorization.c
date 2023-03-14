@@ -14,6 +14,7 @@
 long long dev_to_cnt = 0;
 unsigned char erasure_flag[CODEWORD_LEN];
 unsigned char dev_to_flag[CODEWORD_LEN];
+long long sing_era_cnt = 0;
 
 unsigned char store_q0_dev[MAX_POLY_TERM_SIZE];
 unsigned char store_q1_dev[MAX_POLY_TERM_SIZE];

@@ -7,12 +7,16 @@
 #include "gf_cal.h"
 #include "encoding.h"
 #include "channel.h"
+#include "mod.h"
 #include "interpolation.h"
 #include "factorization.h"
 #include "re_encoding.h"
 #include "lcc_decoding.h"
 
 #define PI	3.1415926
+
+FILE *frc;//use to output log
+char log_name[255];
 
 clock_t start, stop;
 float runtime;
@@ -42,6 +46,10 @@ long long node_num = 0;
 unsigned char cmm_intp_poly[KOT_INTP_POLY_NUM][MAX_POLY_TERM_SIZE];
 long long cmm_intp_poly_degree[KOT_INTP_POLY_NUM];
 long long intp_cnt = 0;
+
+long long dev_1_avg_cnt = 0;
+long long dev_2_avg_cnt = 0;
+long long dev_out_cnt = 0;
 
 int chnl_rel_seq_order()
 {
@@ -398,7 +406,7 @@ int tst_vct_form()
 {
 	long long i = 0, j = 0, pickout_place = 0;
 	long long cwd_idx = 0;
-	unsigned char pickout_sym = 0xFF;
+	long long pickout_sym = 0xFF;
 
 	for(i = 0; i < tst_vct_num; i++)
 	{
@@ -436,6 +444,7 @@ int tst_vct_form()
 	/*for test*/
 	//memcpy(tst_vct[1], tst_vct[0], sizeof(unsigned char) * CODEWORD_LEN);
 	//memcpy(tst_vct[2], tst_vct[0], sizeof(unsigned char) * CODEWORD_LEN);
+	//memcpy(tst_vct[0], recv_poly, sizeof(unsigned char) * CODEWORD_LEN);
 
 	for(i = 0; i < tst_vct_num; i++)
 	{
@@ -469,8 +478,35 @@ int tst_vct_form()
 int koetter_interpolation_hermitian()
 {
 	poly_init();
-#if (0 == CFG_RET)	
+#if (0 == CFG_RET)
+#if 0
 	poly_dev_test(recv_poly);
+#else
+#if 0
+	koetter_intp_her_lcc(recv_poly,
+						 0,
+						 0,
+						 CODEWORD_LEN - 1,
+						 intp_poly_coef,
+						 min_intp_poly);
+	her_fac(min_intp_poly, est_msg_poly, est_cwd_poly);
+#endif
+	poly_init();
+	koetter_intp_her_lcc(recv_poly,
+						 0,
+						 0,
+						 CODEWORD_LEN - 1 - ETA,
+						 intp_poly_coef,
+						 min_intp_poly);
+#if 0
+	koetter_intp_her_lcc(recv_poly,
+						 0,
+						 CODEWORD_LEN - ETA,
+						 CODEWORD_LEN - 1,
+						 intp_poly_coef,
+						 min_intp_poly);
+#endif
+#endif
 #else
 	poly_dev_test(ret_trans_cwd);
 #endif
@@ -742,7 +778,7 @@ int cwd2msg(unsigned char *cwd, unsigned char *msg)
 	{
 		if(0 == recover_lag_flag[i])
 		{
-			DEBUG_NOTICE("erasure_skip: %ld\n", i);
+			DEBUG_NOTICE("recover_erasure_skip: %ld\n", i);
 			continue;
 		}
 		else
@@ -835,7 +871,7 @@ int cwd2msg(unsigned char *cwd, unsigned char *msg)
 	return 0;
 }
 
-int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd)
+int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd, long long tv_idx)
 {
 	long long i = 0;
 	long long genus = 0, radius = 0;
@@ -868,7 +904,8 @@ int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd)
 		radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
 		for(i = 0; i < CODEWORD_LEN; i++)
 		{
-			if(cwd_poly[i] != recv_poly[i])
+			//if(cwd_poly[i] != recv_poly[i])
+			if(cwd_poly[i] != tst_vct[tv_idx][i])
 			{
 				cwd_err++;
 			}
@@ -896,11 +933,12 @@ int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd)
 #endif			
 			for(i = 0; i < CODEWORD_LEN; i++)
 			{
-				DEBUG_SYS("check_result_cwd_err: %ld | %x %x %x\n",
+				DEBUG_SYS("check_result_cwd_err: %ld | %ld | %x %x %x\n",
+						  tv_idx,
 			              i,
 			              cwd[i],
 			              est_cwd[i],
-			              recv_poly[i]);
+			              tst_vct[tv_idx][i]);
 			}
 			for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
 			{
@@ -935,13 +973,57 @@ int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd)
 					          q1_poly_coef[i]);
 				}
 			}
-		}
+
+#if (1 == OUTPUT_LOG)
+			frc = fopen(log_name, "a+");
+			fprintf(frc, "cwd decoding err: %ld %ld\n",
+						  cwd_err,
+						  radius);
+			for(i = 0; i < CODEWORD_LEN; i++)
+			{
+				fprintf(frc, "check_result_cwd_err: %ld | %x %x %x\n",
+							 i,
+							 cwd[i],
+							 est_cwd[i],
+							 tst_vct[tv_idx][i]);
+			}
+			for(i = 0; i < MESSAGE_LEN; i++)
+			{
+				fprintf(frc, "msg_poly[%ld] = 0x%x;\n",
+							 i,
+							 msg_poly[i]);
+			}
+			for(i = 0; i < CODEWORD_LEN; i++)
+			{
+				fprintf(frc, "cwd_poly[%ld] = 0x%x;\n",
+							 i,
+							 cwd_poly[i]);
+			}
+			for(i = 0; i < CODEWORD_LEN; i++)
+			{
+				fprintf(frc, "tst_vct[tv_idx][%ld] = 0x%x;\n",
+							 i,
+							 tst_vct[tv_idx][i]);
+			}
+			for(i = 0; i < symbol_num; i++)
+			{
+				fprintf(frc, "recv_seq[%ld][0] = %f;\n",
+							 i,
+							 recv_seq[i][0]);
+				fprintf(frc, "recv_seq[%ld][1] = %f;\n",
+							 i,
+							 recv_seq[i][1]);
+			}
+			fclose(frc);
+			frc = NULL;
+#endif
+		}		
 	}
 
 	return val;
 }
 
-int check_result_msg(unsigned char *msg, unsigned char *est_msg)
+int check_result_msg(unsigned char *msg, unsigned char *est_msg, long long tv_idx)
 {
 	long long i = 0;
 	long long genus = 0, radius = 0, cwd_err = 0;
@@ -963,7 +1045,7 @@ int check_result_msg(unsigned char *msg, unsigned char *est_msg)
 		DEBUG_IMPORTANT("msg_ok\n");
 		if(GF_Q > min_intp_idx)
 		{
-			DEBUG_SYS("min_intp_idx: %ld\n", min_intp_idx);
+			DEBUG_IMPORTANT("min_intp_idx: %ld\n", min_intp_idx);
 		}
 	}
 	else
@@ -973,7 +1055,8 @@ int check_result_msg(unsigned char *msg, unsigned char *est_msg)
 		radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
 		for(i = 0; i < CODEWORD_LEN; i++)
 		{
-			if(cwd_poly[i] != recv_poly[i])
+			//if(cwd_poly[i] != recv_poly[i])
+			if(cwd_poly[i] != tst_vct[tv_idx][i])
 			{
 				cwd_err++;
 			}
@@ -1037,7 +1120,23 @@ int koetter_intp_her_lcc(unsigned char *test_poly_seq,
 	unsigned char z_flag = 0;
 	long long intp_idx = 0;
 	long long l_idx = 0, p_idx = 0;
-
+#if 1
+	/*for eta == 0 case*/
+	if(intp_start_idx > intp_end_idx)
+	{
+		min_idx = -1;
+		min_degree = 65536;
+		for(j = 0; j < KOT_INTP_POLY_NUM; j++)
+		{
+			intp_poly_degree[j] = poly_degree_cal(input_poly[j]);
+			if(min_degree > intp_poly_degree[j])
+			{
+				min_degree = intp_poly_degree[j];
+				min_idx = j;
+			}
+		}
+	}
+#endif
 	/*intp_poly_tmp is used to store intp. med. result here*/
 	for(i = 0; i < KOT_INTP_POLY_NUM; i++)
 	{
@@ -1199,40 +1298,46 @@ int koetter_intp_her_lcc(unsigned char *test_poly_seq,
 
 	memcpy(output_poly, input_poly[min_idx], sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
 
-	poly_q0q1_get_new(output_poly);
+	/*notice that this function should be kept*/
+	//poly_q0q1_get_new(output_poly);
 	//min_intp_idx = min_idx;
 
 #if (0 == CFG_FAC_FREE)
 #if (1 == CFG_RET)
-	unsigned char tmp_poly[MAX_POLY_TERM_SIZE];
-	memset(tmp_poly, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
-	poly_mul(v_poly, q0_poly_coef, tmp_poly);
-	memcpy(q0_poly_coef, tmp_poly, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
-	memset(output_poly, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
-	memcpy(output_poly, q0_poly_coef, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
-	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
+	if(0 != intp_start_idx)/*this step should not be excuted in cmm intp*/
 	{
-		if(0xFF != q1_poly_coef[i])
+		unsigned char tmp_poly[MAX_POLY_TERM_SIZE];
+		poly_q0q1_get_new(output_poly);
+		memset(tmp_poly, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		poly_mul(v_poly, q0_poly_coef, tmp_poly);
+		memcpy(q0_poly_coef, tmp_poly, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		memset(output_poly, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		memcpy(output_poly, q0_poly_coef, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
 		{
-#if (0 == CFG_QUICK_POLY_SEARCH)		
-			for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
+			if(0xFF != q1_poly_coef[i])
 			{
-				if((x_term_degree_table[j] == x_term_degree_table[i])
-					&& (y_term_degree_table[j] == y_term_degree_table[i])
-					&& (1 == z_term_degree_table[j]))
+#if (0 == CFG_QUICK_POLY_SEARCH)		
+				for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
 				{
-					output_poly[j] = gf_add(output_poly[j], q1_poly_coef[i]);
-					break;
+					if((x_term_degree_table[j] == x_term_degree_table[i])
+						&& (y_term_degree_table[j] == y_term_degree_table[i])
+						&& (1 == z_term_degree_table[j]))
+					{
+						output_poly[j] = gf_add(output_poly[j], q1_poly_coef[i]);
+						break;
+					}
 				}
-			}
 #else
-			j = term_search(x_term_degree_table[i], y_term_degree_table[i], 1);
-			output_poly[j] = gf_add(output_poly[j], q1_poly_coef[i]);
+				j = term_search(x_term_degree_table[i], y_term_degree_table[i], 1);
+				output_poly[j] = gf_add(output_poly[j], q1_poly_coef[i]);
 #endif
+			}
 		}
 	}
 #endif
 #endif
+
 #if (1 == TEST_MODE)
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
 	{
@@ -1262,7 +1367,7 @@ int fac_msg2cwd(unsigned char *msg,
 	{
 		cwd[i] = gf_add(cwd[i], ret_cwd_poly[i]);
 	}
-	cwd2msg(cwd, msg);
+	//cwd2msg(cwd, msg);
 #endif
 
 	return 0;
@@ -1416,6 +1521,8 @@ int her_ret_fac_free(unsigned char *q0_poly,
 	memset(erasure_flag, 0, sizeof(unsigned char) * CODEWORD_LEN);
 	memset(dev_to_flag, 0, sizeof(unsigned char) * CODEWORD_LEN);
 	dev_to_cnt = 0;
+	sing_era_cnt = 0;
+	long long fac_free_sing_limit = 0;
 	keep_cnt = 0;
 
 	unsigned char q0_all_zero = 1;
@@ -1491,7 +1598,7 @@ int her_ret_fac_free(unsigned char *q0_poly,
 		}
 #if (1 == TEST_MODE)
 		q0_val = poly_eva_x_y(q0_poly, af_pnt[i][0], af_pnt[i][1]);
-#endif		
+#endif
 		DEBUG_NOTICE("ret_fac_free_cal: %ld | %d | %x %x %x | %x\n",
 				     i,
 				     erasure_flag[i],
@@ -1527,10 +1634,41 @@ int her_ret_fac_free(unsigned char *q0_poly,
 				}
 			}
 		}
+		
+		for(i = 0; i < CODEWORD_LEN; i++)
+		{
+			if(1 == erasure_flag[i])
+			{
+				sing_era_cnt++;
+			}
+		}
 
-		DEBUG_IMPORTANT("dev_to_cnt: %ld\n", dev_to_cnt);
+		DEBUG_IMPORTANT("dev_to_cnt: %ld\n", dev_to_cnt, sing_era_cnt);
 
-		her_era_cwd_gen(output_cwd);
+		fac_free_sing_limit = CODEWORD_LEN
+		                    - (GF_Q
+		                       * (long long)(ceil((MESSAGE_LEN + (GF_Q) * (GF_Q - 1) / 2.0) / GF_Q)));
+		DEBUG_IMPORTANT("fac_free_sing_limit: %ld\n", fac_free_sing_limit);
+		if(fac_free_sing_limit >= sing_era_cnt)
+		{
+			her_era_cwd_gen(output_cwd);
+		}
+		else
+		{
+			if(CODEWORD_LEN != sing_era_cnt)
+			{
+				DEBUG_SYS("Call Recur. Fac.: %ld\n", sing_era_cnt, fac_free_sing_limit);
+#if (1 == DEV_RECORD)
+				dev_out_cnt++;
+#endif				
+			}
+#if (1 == DEV_RECORD)			
+			else
+			{
+				dev_2_avg_cnt = dev_2_avg_cnt - CODEWORD_LEN;
+			}
+#endif			
+		}
 	}
 
 	return 0;
@@ -1559,6 +1697,35 @@ int her_fac(unsigned char *poly,
 	poly_q0q1_get_new(poly);
 	her_ret_fac_free(q0_poly_coef, q1_poly_coef, v_poly, est_cwd);
 
+	if(((CODEWORD_LEN
+		 - (GF_Q * (long long)(ceil((MESSAGE_LEN + (GF_Q) * (GF_Q - 1) / 2.0) / GF_Q))))
+		 < sing_era_cnt)
+		 && (CODEWORD_LEN != sing_era_cnt))
+	{
+		DEBUG_SYS("Recall Recur. Fac. to Gen. Msg: %ld\n", sing_era_cnt);
+#if (1 == CFG_RET)/*notice that this q0 should be mul by v in this case*/
+		long long i = 0, j = 0;
+		unsigned char tmp_poly[MAX_POLY_TERM_SIZE];
+		memset(tmp_poly, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		poly_mul(v_poly, q0_poly_coef, tmp_poly);
+		memcpy(q0_poly_coef, tmp_poly, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		memset(poly, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		memcpy(poly, q0_poly_coef, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		for(i = 0; i < MAX_POLY_TERM_SIZE; i++)
+		{
+			if(0xFF != q1_poly_coef[i])
+			{
+				j = term_search(x_term_degree_table[i], y_term_degree_table[i], 1);
+				poly[j] = gf_add(poly[j], q1_poly_coef[i]);
+			}
+		}
+#endif
+		factorization_recur(poly, est_msg);
+		fac_msg2cwd(est_msg, est_cwd);
+
+		return 0;
+	}
+
 #if (1 == CFG_RET)	
 	long long i = 0;
 	for(i = 0; i < CODEWORD_LEN; i++)
@@ -1570,7 +1737,7 @@ int her_fac(unsigned char *poly,
 	}
 #endif
 
-	cwd2msg(est_cwd, est_msg);
+	//cwd2msg(est_cwd, est_msg);
 #else
 
 	factorization_recur(poly, est_msg);
@@ -1734,6 +1901,13 @@ long long kot_node_load(unsigned char poly[][MAX_POLY_TERM_SIZE], long long tv_i
 	long long l_idx = 0, p_idx = 0, node_idx = 0;
 	long long div_num = 0;
 
+#if 1
+	if(0 == ETA)// notice this, eta can be zero
+	{
+		return l_idx;
+	}
+#endif
+
 	for(l_idx = ETA - 1; l_idx > 0; l_idx--)
 	{
 		div_num = (long long)(pow(2, (ETA - l_idx)));
@@ -1891,14 +2065,39 @@ int her_lcc_check_result()
 	unsigned char err_this_frame = 1;
 	int cwd_err_val = CODEWORD_LEN, msg_err_val = MESSAGE_LEN;
 	int check_val = 0;
+	long long genus = GF_Q * (GF_Q - 1) / 2;
+	long long radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
 	
 	for(i = 0; i < tst_vct_num; i++)
 	{
 		cwd_err_val = CODEWORD_LEN;
 		msg_err_val = MESSAGE_LEN;
 
-		cwd_err_val = check_result_cwd(cwd_poly, tv_est_cwd[i]);
-		msg_err_val = check_result_msg(msg_poly, tv_est_msg[i]);
+		cwd_err_val = check_result_cwd(cwd_poly, tv_est_cwd[i], i);
+#if (1 == CFG_FAC_FREE)
+		if(0 == cwd_err_val)
+		{
+			cwd2msg(tv_est_cwd[i], tv_est_msg[i]);
+		}
+		else
+		{
+			continue;
+		}
+#else
+
+#if (1 == CFG_RET)
+		if(0 == cwd_err_val)
+		{
+			cwd2msg(tv_est_cwd[i], tv_est_msg[i]);
+		}
+		else
+		{
+			continue;
+		}
+#endif
+
+#endif
+		msg_err_val = check_result_msg(msg_poly, tv_est_msg[i], i);
 		if((0 == cwd_err_val)
 			&& (0 == msg_err_val))
 		{
@@ -1909,6 +2108,19 @@ int her_lcc_check_result()
 	}
 	if(0 != err_this_frame)
 	{
+		for(i = 0; i < tst_vct_num; i++)
+		{
+			if(tv_err[i] <= radius)
+			{
+				DEBUG_SYS("dec_err\n");
+#if (1 == OUTPUT_LOG)
+				frc = fopen(log_name, "a+");
+				fprintf(frc, "dec_err\n");
+				fclose(frc);
+				frc = NULL;
+#endif
+			}
+		}
 		err_cnt++;
 	}
 
@@ -1993,6 +2205,7 @@ int her_ucm_proc(long long tv_idx)
 	/*load*/
 	layer_idx = kot_node_load(intp_poly_coef, tv_idx);
 	layer_idx = layer_idx + (CODEWORD_LEN - 1 - ETA) + 1;
+	DEBUG_NOTICE("layer_idx: %ld\n", layer_idx);
 	//layer_idx = 0;
 
 #if (1 == CFG_RET)
