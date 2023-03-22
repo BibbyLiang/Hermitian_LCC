@@ -38,11 +38,37 @@ void clear_sim()
 #endif	
 }
 
+int tv_test_mode()
+{
+	long long i = 0;
+	long long err_val = 1;
+
+	long long genus = GF_Q * (GF_Q - 1) / 2;
+	long long radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
+
+
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		DEBUG_NOTICE("tst_vct_num: %ld\n", tst_vct_num);
+		if(radius >= tv_err[i])
+		{
+			err_val = 0;
+			break;
+		}
+	}
+	if(0 != err_val)
+	{
+		err_cnt++;
+	}
+
+	return 0;
+}
+
 void main()
 {
 	long long i = 0;
-	long long sim_cnt = 1, monitor_cnt = 1;
-	float eb2n0_start = 5, eb2n0_stop = 5, eb2n0_step = 1;
+	long long sim_cnt = 2, monitor_cnt = 1;
+	float eb2n0_start = eb2n0, eb2n0_stop = eb2n0, eb2n0_step = 1;
 
 	int err_msg = 0, err_cwd = 0;
 
@@ -142,6 +168,16 @@ void main()
 			start = clock();
 
 			tst_vct_form();
+
+#if (1 == TV_TEST)
+			tv_test_mode();
+
+			stop = clock();
+			runtime = runtime + (stop - start) / 1000.0000;
+			cnt_switch = 0;
+			
+			continue;
+#endif
 
 #if (1 == CFG_RET)
 			re_encoding_transform();

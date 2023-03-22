@@ -36,6 +36,7 @@ unsigned char **ret_tst_vct;
 unsigned char **tv_est_msg;
 unsigned char **tv_est_cwd;
 long long *tv_err;
+unsigned char *tv_dec_output_flag;
 
 unsigned char recover_lag_poly[CODEWORD_LEN][MAX_POLY_TERM_SIZE];
 unsigned char recover_lag_flag[CODEWORD_LEN];
@@ -50,6 +51,7 @@ long long intp_cnt = 0;
 long long dev_1_avg_cnt = 0;
 long long dev_2_avg_cnt = 0;
 long long dev_out_cnt = 0;
+
 
 int chnl_rel_seq_order()
 {
@@ -122,6 +124,109 @@ int chnl_rel_seq_order()
 
 	return 0;
 }
+
+#if (1 == CFG_RET_ETA_OPT)
+int chnl_rel_order_pair_adj()
+{
+	long long i = 0, j = 0;
+	long long pair_cnt = 0, sym_cnt = 0;
+	long long sym_idx = 0;
+	float sym_rel_val = 0;
+	long long pair_hist[GF_FIELD];
+	memset(pair_hist, 0, sizeof(long long) * GF_FIELD);
+	unsigned char tmp_flag = 0;
+	unsigned char sym_choose_flag[CODEWORD_LEN];
+	memset(sym_choose_flag, 0, sizeof(unsigned char) * CODEWORD_LEN);
+
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		sym_idx = chnl_rel_order_idx[i];
+		for(j = 0; j < GF_FIELD; j++)
+		{
+			if(af_pnt[sym_idx][0] == power_polynomial_table[j][0])
+			{
+				if((1 == tmp_flag)
+					&& (0 == pair_hist[j]))
+				{
+					sym_choose_flag[i] = 2;
+					break;
+				}
+
+				pair_hist[j]++;
+				sym_cnt++;
+				if(0 == tmp_flag)
+				{
+					sym_choose_flag[i] = 1;
+				}
+				else
+				{
+					sym_choose_flag[i] = 3;
+				}
+				if(1 == pair_hist[j])
+				{
+					pair_cnt++;
+				}
+				break;
+			}
+		}
+		DEBUG_NOTICE("sym_choose: %ld | %ld %ld | %ld | %x\n", i, sym_cnt, pair_cnt, sym_idx, sym_choose_flag[i]);
+		
+		if((GF_FIELD - (MESSAGE_LEN - GF_Q * (GF_Q - 1) / 2) / GF_Q) <= pair_cnt)
+		{
+			tmp_flag = 1;
+		}
+		if(ETA <= sym_cnt)
+		{
+			break;
+		}
+	}
+
+#if (1 == TEST_MODE)
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		DEBUG_NOTICE("chnl_rel_order_idx_prv: %ld %f %ld\n",
+					 i,
+					 chnl_rel_order[i],
+					 chnl_rel_order_idx[i]);
+	}
+#endif
+
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		if(3 == sym_choose_flag[i])
+		{
+			for(j = 0; j < CODEWORD_LEN; j++)
+			{
+				if(2 == sym_choose_flag[j])
+				{
+					DEBUG_NOTICE("sym_rel_exc: %ld %ld | %ld %ld\n", i, j, chnl_rel_order_idx[i], chnl_rel_order_idx[j]);
+					sym_idx = chnl_rel_order_idx[i];
+					sym_rel_val = chnl_rel_order[i];
+					chnl_rel_order_idx[i] = chnl_rel_order_idx[j];
+					chnl_rel_order[i] = chnl_rel_order[j];
+					chnl_rel_order_idx[j] = sym_idx;
+					chnl_rel_order[j] = sym_rel_val;
+					sym_choose_flag[i] = 2;
+					sym_choose_flag[j] = 3;
+					break;
+				}
+			}
+		}
+	}
+
+#if (1 == TEST_MODE)
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		DEBUG_NOTICE("chnl_rel_order_idx_adj: %ld %f %ld\n",
+					 i,
+					 chnl_rel_order[i],
+		             chnl_rel_order_idx[i]);
+	}
+#endif
+
+	return 0;
+}
+#endif
 
 int chnl_rel_cal(float **input_seq,
 				    long long input_len)
@@ -294,6 +399,10 @@ int chnl_rel_cal(float **input_seq,
 
 	chnl_rel_seq_order();
 
+#if (1 == CFG_RET_ETA_OPT)
+	chnl_rel_order_pair_adj();
+#endif
+
 	return 0;
 }
 
@@ -354,6 +463,12 @@ int tst_vct_init()
 	{
 		tv_err[i] = 0;
 	}
+	
+	tv_dec_output_flag = (unsigned char*)malloc(sizeof(unsigned char) * tst_vct_num);
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		tv_dec_output_flag[i] = 0;
+	}
 
 	DEBUG_NOTICE("tst_vct_init OK\n");
 
@@ -398,6 +513,9 @@ int tst_vct_exit()
 
 	free(tv_err);
 	tv_err = NULL;
+	
+	free(tv_dec_output_flag);
+	tv_dec_output_flag = NULL;
 
 	return 0;
 }
@@ -457,6 +575,8 @@ int tst_vct_form()
 			}
 		}
 		DEBUG_NOTICE("tv_err: %ld | %ld\n", i, tv_err[i]);
+		
+		tv_dec_output_flag[i] = 0;
 	}
 
 #if (1 == CFG_DEBUG_NOTICE)
@@ -1161,6 +1281,7 @@ int koetter_intp_her_lcc(unsigned char *test_poly_seq,
 #if (1 == CFG_RET)
 		if(1 == keep_flag[intp_idx])
 		{
+			DEBUG_NOTICE("ReT Keep Skip: %ld %ld\n", i, intp_idx);
 			continue;
 		}
 #endif
@@ -1614,7 +1735,7 @@ int her_ret_fac_free(unsigned char *q0_poly,
 				DEBUG_IMPORTANT("erasure_flag_check: %d %ld\n", j, dev_to_cnt);
 			}
 		}
-#endif		
+#endif
 	}
 
 	if(0 != dev_to_cnt)
@@ -1670,6 +1791,17 @@ int her_ret_fac_free(unsigned char *q0_poly,
 #endif			
 		}
 	}
+#if (1 == CFG_PRG_DECODING)	
+	//else
+	{
+		DEBUG_NOTICE("force erasure decoding\n");
+		memset(erasure_flag, 0, sizeof(unsigned char) * CODEWORD_LEN);
+		memset(dev_to_flag, 0, sizeof(unsigned char) * CODEWORD_LEN);
+		memset(erasure_flag, 1, sizeof(unsigned char) * GF_Q);
+		memset(dev_to_flag, 1, sizeof(unsigned char) * GF_Q);
+		her_era_cwd_gen(output_cwd);
+	}
+#endif	
 
 	return 0;
 }
@@ -2070,6 +2202,12 @@ int her_lcc_check_result()
 	
 	for(i = 0; i < tst_vct_num; i++)
 	{
+		if(0 == tv_dec_output_flag[i])
+		{
+			/*this tv. has no output, no need to check*/
+			continue;
+		}
+
 		cwd_err_val = CODEWORD_LEN;
 		msg_err_val = MESSAGE_LEN;
 
@@ -2135,6 +2273,152 @@ int her_lcc_check_result()
 	return 0;
 }
 
+int her_cwd_check(unsigned char *cwd)
+{
+	long long i = 0, j = 0, k = 0;
+	unsigned char x_val = 0xFF, y_val = 0xFF, val = 0xFF;
+
+	for(i = 0; i < GF_FIELD; i++)
+	{
+		for(j = 0; j < GF_FIELD; j++)
+		{
+			val = 0xFF;
+			for(k = 0; k < CODEWORD_LEN; k++)
+			{
+				x_val = gf_pow_cal(af_pnt[i][0], i);
+				y_val = gf_pow_cal(af_pnt[i][1], j);
+				val = gf_add(val,
+							 gf_multp(gf_add(cwd[k], cwd[k]),
+									  gf_multp(x_val, y_val)));
+			}
+			DEBUG_NOTICE("ret_cwd_check: %ld %ld | %x\n",
+						 i,
+						 j,
+						 val);
+		}
+	}
+
+	return 0;
+}
+
+/*this should be modified for AG codes*/
+int MLcriterion(unsigned char est_cwd[], unsigned char recv_cwd[])
+{
+    long long i, j;
+    float gama1, gama2;
+    unsigned char same_pos_vector[CODEWORD_LEN], differ_pos_vector[CODEWORD_LEN];
+    long long count1 = 0, count2 = 0;
+    long long Hammin_dis, differ_pos, same_pos;
+    float symbol_reliabilty_metric[CODEWORD_LEN];
+    float temp, temp_metric[CODEWORD_LEN];
+    float max_symbol_reliability, sec_max_symbol_reliability;
+    long long max_row, sec_max_row;
+    unsigned char cwd[CODEWORD_LEN];
+    long long code_min_dis = CODEWORD_LEN - MESSAGE_LEN + 1 - (GF_Q) * (GF_Q - 1) / 2;
+
+    for (i = 0; i < CODEWORD_LEN; i++)
+    {
+        same_pos_vector[i] = 0xFF;
+        differ_pos_vector[i] = 0xFF;
+        temp_metric[i] = 0;
+        cwd[i] = est_cwd[i];
+    }
+
+    for (i = 0; i < CODEWORD_LEN; i++)
+    {
+        if (cwd[i] == recv_cwd[i])
+        {
+            same_pos_vector[count1] = i;
+            count1++;
+        }
+        else
+        {
+            differ_pos_vector[count2] = i;
+            count2++;
+        }
+    }
+    Hammin_dis = count2;
+    gama1 = 1;
+    for (j = 0; j < count2; j++)
+    {
+        differ_pos = differ_pos_vector[j];
+        max_symbol_reliability = 0;
+        for (i = 0; i < GF_FIELD; i++)
+        {
+            if (chnl_rel_matrix[i][differ_pos] > max_symbol_reliability)
+                max_symbol_reliability = chnl_rel_matrix[i][differ_pos];
+        }
+        for (i = 0; i < GF_FIELD; i++)
+        {
+            if (power_polynomial_table[i][0] == cwd[differ_pos])
+            {
+                //temp=i;
+                break;
+            }
+        }
+        DEBUG_INFO("gama1: %d %d | %f %f %f\n",
+        		   differ_pos,
+        		   i,
+	    		   gama1,
+	    		   max_symbol_reliability,
+	    		   chnl_rel_matrix[i][differ_pos]);
+        gama1 = gama1 * max_symbol_reliability / chnl_rel_matrix[i][differ_pos];
+    }
+    for (i = 0; i < count1; i++)
+    {
+        same_pos = same_pos_vector[i];
+        max_symbol_reliability = 0;
+        sec_max_symbol_reliability = 0;
+        max_row = -1;
+        sec_max_row = -1;
+        for (j = 0; j < GF_FIELD; j++)
+        {
+            if (chnl_rel_matrix[j][same_pos] > max_symbol_reliability)
+            {
+                sec_max_symbol_reliability = max_symbol_reliability;
+                sec_max_row = max_row;
+                max_symbol_reliability = chnl_rel_matrix[j][same_pos];
+                max_row = j;
+            }
+            else if (chnl_rel_matrix[j][same_pos] > sec_max_symbol_reliability)
+            {
+                sec_max_symbol_reliability = chnl_rel_matrix[j][same_pos];
+                sec_max_row = j;
+            }
+        }
+        symbol_reliabilty_metric[i] = max_symbol_reliability / sec_max_symbol_reliability;
+        temp_metric[i] = symbol_reliabilty_metric[i];
+    }
+    //insertion sort the metric from small to big
+    for (j = 1; j < count1; j++)
+    {
+        temp = temp_metric[j];
+        i = j - 1;
+        while (i >= 0 && temp_metric[i] > temp)
+        {
+            temp_metric[i + 1] = temp_metric[i];
+            i = i - 1;
+        }
+        temp_metric[i + 1] = temp;
+    }
+    gama2 = 1;
+    //for (i = 0; i < (CODEWORD_LEN - MESSAGE_LEN + 1 - Hammin_dis); i++)
+    for (i = 0; i < (code_min_dis - Hammin_dis); i++)
+    {
+        gama2 = gama2 * temp_metric[i];
+        DEBUG_INFO("gama2: %f %f\n",
+    		        gama2,
+    		        temp_metric[i]);
+    }
+    DEBUG_INFO("gama: %f %f\n",
+    		   gama1,
+    		   gama2);
+    if (gama1 <= gama2)
+        return 1;
+    else
+        return 0;
+}
+
 int her_cmm_intp()
 {
 	long long i = 0, j = 0;
@@ -2149,7 +2433,7 @@ int her_cmm_intp()
 #if (1 == CFG_RET)
 	koetter_intp_her_lcc(ret_tst_vct[0],
 						 0,
-						 keep_cnt,//notice this
+						 0,//keep_cnt,//notice this, there are some problems
 						 CODEWORD_LEN - 1 - ETA,
 						 intp_poly_coef,
 						 min_intp_poly);
@@ -2250,7 +2534,36 @@ int her_ucm_proc(long long tv_idx)
 
 int her_lcc_dec()
 {
-	long long i = 0;
+	long long i = 0, j = 0;
+	int ml_check_val = 0;
+	long long tv_recv_diff_num = 0, tv_est_err_num = 0;
+
+#if (1 == CFG_PRG_RET_ET)
+	ml_check_val = MLcriterion(ret_et_cwd_poly, recv_poly);
+	if(0 != ml_check_val)
+	{
+		/*borrow the first tv*/
+		memcpy(tv_est_cwd[0], ret_et_cwd_poly, sizeof(unsigned char) * CODEWORD_LEN);
+		tv_dec_output_flag[0] = 1;
+		tv_recv_diff_num = 0;
+		tv_est_err_num = 0;
+		for(j = 0; j < CODEWORD_LEN; j++)
+		{
+			if(recv_poly[j] != tv_est_cwd[0][j])
+			{
+				tv_recv_diff_num++;
+			}
+			if(cwd_poly[j] != tv_est_cwd[0][j])
+			{
+				tv_est_err_num++;
+			}
+		}
+		DEBUG_NOTICE("ML pass for ReT: %ld %ld\n", tv_recv_diff_num, tv_est_err_num);
+		her_lcc_check_result();
+
+		return 0;
+	}
+#endif
 
 	kot_node_clear();
 
@@ -2260,6 +2573,35 @@ int her_lcc_dec()
 	for(i = 0; i < tst_vct_num; i++)
 	{
 		her_ucm_proc(i);
+
+		tv_dec_output_flag[i] = 1;
+
+#if (1 == CFG_PRG_DECODING)
+		if(0 == ml_check_val)
+		{
+			//her_cwd_check(tv_est_cwd[i]);
+			ml_check_val = MLcriterion(tv_est_cwd[i], recv_poly);
+			if(0 != ml_check_val)
+			{
+				tv_recv_diff_num = 0;
+				tv_est_err_num = 0;
+				for(j = 0; j < CODEWORD_LEN; j++)
+				{
+					if(recv_poly[j] != tv_est_cwd[i][j])
+					{
+						tv_recv_diff_num++;
+					}
+					if(cwd_poly[j] != tv_est_cwd[i][j])
+					{
+						tv_est_err_num++;
+					}
+				}
+				DEBUG_NOTICE("ML pass: %ld %ld %ld %ld\n", i, tv_err[i], tv_recv_diff_num, tv_est_err_num);
+				break;
+			}
+		}
+#endif
+
 	}
 	DEBUG_NOTICE("intp_cnt: %ld\n", intp_cnt);
 

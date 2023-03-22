@@ -190,16 +190,6 @@ int rnd_msg_gen()
 		             msg_poly[i]);
 	}
 
-#if 0//(1 == TEST_MODE)
-	memset(msg_poly, 0xFF, sizeof(unsigned char) * MESSAGE_LEN);
-	for(i = 0; i < MESSAGE_LEN; i++)
-	{
-		DEBUG_NOTICE("test_msg_poly: %ld | %x\n",
-		             i,
-		             msg_poly[i]);
-	}
-#endif
-
 #if (1 == FAC_FREE_ERR)
 	msg_poly[0] = 0x6;
 	msg_poly[1] = 0x2;
@@ -248,6 +238,16 @@ int rnd_msg_gen()
 	}
 #endif
 
+#if 0//(1 == TEST_MODE)//fix input msg
+	memset(msg_poly, 0x0, sizeof(unsigned char) * MESSAGE_LEN);
+	for(i = 0; i < MESSAGE_LEN; i++)
+	{
+		DEBUG_NOTICE("test_msg_poly: %ld | %x\n",
+		             i,
+		             msg_poly[i]);
+	}
+#endif
+
 	return 0;
 }
 
@@ -287,73 +287,6 @@ int her_encoding(unsigned char *msg, unsigned char *cwd)
 		             i,
 		             cwd[i]);
 	}
-
-#if 0//(1 == TEST_MODE)
-	cwd_poly[0] = 0xe;
-	cwd_poly[1] = 0x6;
-	cwd_poly[2] = 0x9;
-	cwd_poly[3] = 0x4;
-	cwd_poly[4] = 0x7;
-	cwd_poly[5] = 0x2;
-	cwd_poly[6] = 0x4;
-	cwd_poly[7] = 0x9;
-	cwd_poly[8] = 0x4;
-	cwd_poly[9] = 0xe;
-	cwd_poly[10] = 0x9;
-	cwd_poly[11] = 0x2;
-	cwd_poly[12] = 0x4;
-	cwd_poly[13] = 0xc;
-	cwd_poly[14] = 0x4;
-	cwd_poly[15] = 0x1;
-	cwd_poly[16] = 0xd;
-	cwd_poly[17] = 0x9;
-	cwd_poly[18] = 0xc;
-	cwd_poly[19] = 0x8;
-	cwd_poly[20] = 0x1;
-	cwd_poly[21] = 0xc;
-	cwd_poly[22] = 0x0;
-	cwd_poly[23] = 0x1;
-	cwd_poly[24] = 0xc;
-	cwd_poly[25] = 0xe;
-	cwd_poly[26] = 0x4;
-	cwd_poly[27] = 0x4;
-	cwd_poly[28] = 0x2;
-	cwd_poly[29] = 0xd;
-	cwd_poly[30] = 0x4;
-	cwd_poly[31] = 0x0;
-	cwd_poly[32] = 0xff;
-	cwd_poly[33] = 0xff;
-	cwd_poly[34] = 0x9;
-	cwd_poly[35] = 0x8;
-	cwd_poly[36] = 0xd;
-	cwd_poly[37] = 0xe;
-	cwd_poly[38] = 0x6;
-	cwd_poly[39] = 0x8;
-	cwd_poly[40] = 0x1;
-	cwd_poly[41] = 0x3;
-	cwd_poly[42] = 0xc;
-	cwd_poly[43] = 0xff;
-	cwd_poly[44] = 0x5;
-	cwd_poly[45] = 0xa;
-	cwd_poly[46] = 0x5;
-	cwd_poly[47] = 0xd;
-	cwd_poly[48] = 0x3;
-	cwd_poly[49] = 0x0;
-	cwd_poly[50] = 0x0;
-	cwd_poly[51] = 0x8;
-	cwd_poly[52] = 0xa;
-	cwd_poly[53] = 0x4;
-	cwd_poly[54] = 0xd;
-	cwd_poly[55] = 0x4;
-	cwd_poly[56] = 0x8;
-	cwd_poly[57] = 0x3;
-	cwd_poly[58] = 0x3;
-	cwd_poly[59] = 0x6;
-	cwd_poly[60] = 0x8;
-	cwd_poly[61] = 0xd;
-	cwd_poly[62] = 0xd;
-	cwd_poly[63] = 0x7;
-#endif
 
 	return 0;
 }

@@ -1,8 +1,8 @@
 #ifndef CFG_DECODING_H
 #define CFG_DECODING_H
 
-#define EARLY_TERMINATION	0
-#define ET_NUM				100
+#define EARLY_TERMINATION	1
+#define ET_NUM				200
 
 #define GF_Q			4
 #if (2 == GF_Q)
@@ -15,7 +15,7 @@
 #endif
 #if (4 == GF_Q)
 #define GF_FIELD        16
-#define MESSAGE_LEN     39
+#define MESSAGE_LEN     49
 #endif
 #if (6 == GF_Q)
 #define GF_FIELD        64
@@ -31,11 +31,17 @@
 
 #define SYS_ENC			 0
 
+#define CFG_PRG_DECODING 0
+
+#define CFG_PRG_RET_ET	 1
+
 #define TEST_MODE		 0
 
-#define OUTPUT_LOG		 1
+#define TV_TEST			 0
 
-#define ETA				 0
+#define OUTPUT_LOG		 0
+
+#define ETA				 4
 
 #define MAX_DEGREE		 GF_FIELD
 #define CFG_DYM_SIZE	 1
@@ -52,11 +58,14 @@
 
 #define CFG_FAC_FREE	 1
 #define CFG_STORE_DEV	 CFG_FAC_FREE//it is efficient
-#define FAC_FREE_ERR	 0//it disappears after re-order rel_seq, i don't know why
-#define DEV_RECORD		 1
+#define FAC_FREE_ERR	 0
+#define DEV_RECORD		 0
 
 #define CFG_RET			 1
 #define CFG_FAST_RET	 1
 #define CFG_Y_RET_STORE  CFG_FAST_RET//there are some bugs, it cannot be set as 0 independently
+#define CFG_RET_ETA_OPT  0
+#define CFG_RET_L		 ((MESSAGE_LEN - (GF_Q) * (GF_Q - 1) / 2 + 0) / GF_Q * GF_Q + 0)
+#define CFG_NREL_NO_RET	 1
 
 #endif

@@ -18,12 +18,14 @@ extern long long chnl_rel_scd_id[CODEWORD_LEN];
 extern long long tst_vct_num;
 extern unsigned char **tst_vct;
 extern unsigned char **ret_tst_vct;
+extern long long *tv_err;
 
 extern long long dev_1_avg_cnt;
 extern long long dev_2_avg_cnt;
 extern long long dev_out_cnt;
 
 extern int chnl_rel_cal(float **input_seq, long long input_len);
+extern int chnl_rel_order_pair_adj();
 extern int tst_vct_num_cal();
 extern int tst_vct_init();
 extern int tst_vct_exit();
@@ -48,6 +50,8 @@ extern int kot_node_clear();
 extern int kot_node_exit();
 extern int kot_node_save(unsigned char poly[][MAX_POLY_TERM_SIZE], long long layer_idx, long long place_idx);
 extern long long kot_node_load(unsigned char poly[][MAX_POLY_TERM_SIZE], long long tv_idx);
+extern int her_cwd_check(unsigned char *cwd);
+extern int MLcriterion(unsigned char est_cwd[], unsigned char recv_cwd[]);
 extern int her_cmm_intp();
 extern int her_ucm_proc(long long tv_idx);
 extern int check_result_tv(unsigned char *tv, unsigned char *est_cwd, unsigned char *est_msg);
