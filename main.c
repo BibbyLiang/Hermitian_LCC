@@ -11,6 +11,7 @@
 #include "interpolation.h"
 #include "factorization.h"
 #include "re_encoding.h"
+#include "br.h"
 #include "lcc_decoding.h"
 
 void init_simulation()
@@ -67,8 +68,9 @@ int tv_test_mode()
 void main()
 {
 	long long i = 0;
-	long long sim_cnt = 2, monitor_cnt = 1;
+	long long sim_cnt = 1, monitor_cnt = 1;
 	float eb2n0_start = eb2n0, eb2n0_stop = eb2n0, eb2n0_step = 1;
+	int val = 0;
 
 	int err_msg = 0, err_cwd = 0;
 
@@ -180,11 +182,18 @@ void main()
 #endif
 
 #if (1 == CFG_RET)
-			re_encoding_transform();
+			val = re_encoding_transform();
+#endif
+
+#if (1 == CFG_BR)
+			br_test();
 #endif
 
 			//koetter_interpolation_hermitian();
-			her_lcc_dec();
+			if(0 == val)
+			{
+				her_lcc_dec();
+			}
 
 			stop = clock();
 			runtime = runtime + (stop - start) / 1000.0000;

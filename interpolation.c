@@ -453,6 +453,7 @@ int poly_q0q1_get_new(unsigned char *poly)
 	{
 		if(1 == z_term_degree_table[i])
 		{
+#if (0 == CFG_QUICK_POLY_SEARCH)		
 			for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
 			{
 				if((x_term_degree_table[j] == x_term_degree_table[i])
@@ -463,6 +464,10 @@ int poly_q0q1_get_new(unsigned char *poly)
 				}
 			}
 			q1_poly_coef[j] = poly[i];
+#else
+			j = term_search(x_term_degree_table[i], y_term_degree_table[i], 0);
+			q1_poly_coef[j] = poly[i];
+#endif
 		}
 		else
 		{
@@ -528,6 +533,15 @@ int poly_normal_update(unsigned char *poly_tmp, unsigned char *poly_update, unsi
 		else
 		{
 			poly_tmp[i] = gf_add(poly_update_val, poly_min_val);
+#if 0
+			DEBUG_NOTICE("poly_tmp: %ld %ld %ld | %x %x | %x\n",
+			             x_term_degree_table[i],
+			             y_term_degree_table[i],
+			             z_term_degree_table[i],
+			             poly_update_val,
+			             poly_min_val,
+			             poly_tmp[i]);
+#endif		
 		}
 	}
 
@@ -546,6 +560,7 @@ int poly_min_update(unsigned char *poly_tmp, unsigned char *poly_min, unsigned c
 	{
 		if(0xFF != poly_min[i])
 		{
+#if (0 == CFG_QUICK_POLY_SEARCH)		
 			for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
 			{
 				if((x_term_degree_table[j] == (x_term_degree_table[i] + 1))
@@ -556,6 +571,10 @@ int poly_min_update(unsigned char *poly_tmp, unsigned char *poly_min, unsigned c
 					break;
 				}
 			}
+#else
+			j = term_search((x_term_degree_table[i] + 1), y_term_degree_table[i], z_term_degree_table[i]);
+			x_up_poly_min[j] = poly_min[i];
+#endif
 			DEBUG_NOTICE("x_up_poly_min: %ld %ld %ld | %x\n",
 			             x_term_degree_table[j],
 			             y_term_degree_table[j],

@@ -5,6 +5,7 @@
 #include "gf_cal.h"
 #include "interpolation.h"
 #include "encoding.h"
+#include "lcc_decoding.h"
 
 unsigned char af_pnt[CODEWORD_LEN][2];
 long long pole_basis_pow[MESSAGE_LEN][2];
@@ -15,6 +16,7 @@ unsigned char cwd_poly[CODEWORD_LEN];
 unsigned char recv_poly[CODEWORD_LEN];
 unsigned char est_msg_poly[MESSAGE_LEN];
 unsigned char est_cwd_poly[CODEWORD_LEN];
+long long pow_trans_order[CODEWORD_LEN];
 
 int affine_points_cal()
 {
@@ -238,8 +240,48 @@ int rnd_msg_gen()
 	}
 #endif
 
-#if 0//(1 == TEST_MODE)//fix input msg
-	memset(msg_poly, 0x0, sizeof(unsigned char) * MESSAGE_LEN);
+#if (1 == FIX_INPUT_DBG)//fix input msg
+#if (1 == CFG_INTP_ORDER_ERR)//bug to be solved
+msg_poly[0] = 0xa;
+msg_poly[1] = 0xd;
+msg_poly[2] = 0xc;
+msg_poly[3] = 0x8;
+msg_poly[4] = 0xa;
+msg_poly[5] = 0xa;
+msg_poly[6] = 0x9;
+msg_poly[7] = 0x2;
+msg_poly[8] = 0x9;
+msg_poly[9] = 0xc;
+msg_poly[10] = 0x0;
+msg_poly[11] = 0xd;
+msg_poly[12] = 0x9;
+msg_poly[13] = 0x9;
+msg_poly[14] = 0x3;
+msg_poly[15] = 0xd;
+msg_poly[16] = 0xb;
+msg_poly[17] = 0x5;
+msg_poly[18] = 0xa;
+msg_poly[19] = 0xb;
+msg_poly[20] = 0x8;
+msg_poly[21] = 0x9;
+msg_poly[22] = 0x8;
+msg_poly[23] = 0x4;
+msg_poly[24] = 0xd;
+msg_poly[25] = 0x6;
+msg_poly[26] = 0xe;
+msg_poly[27] = 0x8;
+msg_poly[28] = 0xd;
+msg_poly[29] = 0xc;
+msg_poly[30] = 0xff;
+msg_poly[31] = 0xb;
+msg_poly[32] = 0xb;
+msg_poly[33] = 0xe;
+msg_poly[34] = 0xd;
+msg_poly[35] = 0xd;
+msg_poly[36] = 0x6;
+msg_poly[37] = 0x7;
+msg_poly[38] = 0x6;
+#endif
 	for(i = 0; i < MESSAGE_LEN; i++)
 	{
 		DEBUG_NOTICE("test_msg_poly: %ld | %x\n",
@@ -288,6 +330,51 @@ int her_encoding(unsigned char *msg, unsigned char *cwd)
 		             cwd[i]);
 	}
 
+	//long long cwd_dim = check_cwd_dimension(cwd);
+	//DEBUG_NOTICE("enc_cwd_dim: %ld\n", cwd_dim);
+#if (1 == CFG_INTP_ORDER_ERR)
+	long long cnt = 0, k = 0, m = 0, n = 0, l = 0;
+	for(i = 0; i < GF_FIELD; i++)
+	{
+		for(j = 0; j < GF_FIELD; j++)
+		{
+			for(k = 0; k < CODEWORD_LEN; k++)
+			{
+				for(m = 0; m < GF_FIELD; m++)
+				{
+					if(power_polynomial_table[m][0] == af_pnt[k][0])
+					{
+						break;
+					}
+				}
+				for(n = 0; n < GF_FIELD; n++)
+				{
+					if(power_polynomial_table[n][0] == af_pnt[k][1])
+					{
+						break;
+					}
+				}
+				if((i == power_polynomial_table[m][1])
+					&& (j == power_polynomial_table[n][1]))
+				{
+					//DEBUG_NOTICE("af_point[%d] = %d %d;\n", cnt, i, j);
+					for(l = 0; l < GF_FIELD; l++)
+					{
+						if(power_polynomial_table[l][0] == cwd_poly[k])
+						{
+							pow_trans_order[cnt] = k;
+							DEBUG_NOTICE("codeword[%d] = %d;\n", cnt, power_polynomial_table[l][1]);
+							//DEBUG_NOTICE("pow_trans_order: %d %d\n", cnt, k);
+							break;
+						}
+					}
+					cnt++;
+					break;
+				}
+			}
+		}
+	}
+#endif
 	return 0;
 }
 
