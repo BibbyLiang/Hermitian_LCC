@@ -673,6 +673,73 @@ int v_poly_construct()
 	return 0;
 }
 
+int unrel_pos_pair_sort(float *rel_seq, long long *rel_idx_seq, long long rel_len)
+{
+	long long i = 0, j = 0;
+	unsigned char pick_x_sym = 0xFF;
+	long long sort_cnt = 0;
+	/*notice there may be overflow because of these big local matrix*/
+	float new_rel_seq[rel_len];
+	long long new_rel_idx_seq[rel_len];
+	unsigned char x_sym_mark[rel_len];
+	memset(x_sym_mark, 0, sizeof(unsigned char) * rel_len);
+	long long tmp_len = 0;
+
+	for(i = 0; i < ETA; i++)
+	{
+		if(0 == x_sym_mark[i])
+		{
+			pick_x_sym = af_pnt[rel_idx_seq[i]][0];
+			x_sym_mark[i] = 1;
+			new_rel_idx_seq[i] = rel_idx_seq[i];
+			new_rel_seq[i] = rel_seq[i];
+
+			for(j = ETA; j < rel_len; j++)
+			{
+				if((pick_x_sym == af_pnt[rel_idx_seq[j]][0])
+					&& (0 == x_sym_mark[j]))
+				{
+					new_rel_idx_seq[rel_len - 1 - sort_cnt] = rel_idx_seq[j];
+					new_rel_seq[rel_len - 1 - sort_cnt] = rel_seq[j];
+					x_sym_mark[j] = 1;
+					sort_cnt++;
+				}
+			}
+		}
+	}
+	tmp_len = rel_len - sort_cnt;
+	sort_cnt = ETA;
+	DEBUG_NOTICE("tmp_len: %ld\n", tmp_len);
+
+	for(i = ETA; i <= tmp_len; i++)
+	{
+		if(0 == x_sym_mark[i])
+		{
+			pick_x_sym = af_pnt[rel_idx_seq[i]][0];
+
+			for(j = 0; j < rel_len; j++)
+			{
+				if(pick_x_sym == af_pnt[rel_idx_seq[j]][0])
+				{
+					new_rel_idx_seq[sort_cnt] = rel_idx_seq[j];
+					new_rel_seq[sort_cnt] = rel_seq[j];
+					x_sym_mark[j] = 1;
+					sort_cnt++;
+				}
+			}
+		}
+	}
+
+	for(i = 0; i < rel_len; i++)
+	{
+		DEBUG_NOTICE("new_rel_seq: %ld | %f %ld\n", i, new_rel_seq[i], new_rel_idx_seq[i]);
+	}
+	memcpy(rel_seq, new_rel_seq, sizeof(float) * rel_len);
+	memcpy(rel_idx_seq, new_rel_idx_seq, sizeof(long long) * rel_len);
+
+	return 0;
+}
+
 int keep_position_set(long long *keep_poition)
 {
 	long long i = 0, j = 0, k = 0;
@@ -837,7 +904,14 @@ int keep_position_set(long long *keep_poition)
 			tmp_cnt++;
 		}
 	}
+
+	//BubbleSort4(unrel_order, (int)(CODEWORD_LEN - keep_cnt), unrel_order_idx);
+#if (1 == CFG_P_NREL_SORT)
+	unrel_pos_pair_sort(unrel_order, unrel_order_idx, CODEWORD_LEN - keep_cnt);
+#else
 	BubbleSort4(unrel_order, (int)(CODEWORD_LEN - keep_cnt), unrel_order_idx);
+#endif
+
 	tmp_cnt = 0;
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
@@ -2019,8 +2093,19 @@ int ret_cwd_gen_new()
 #if (1 == CFG_CWD_DIM_CHECK)
 	//long long cwd_dim = check_cwd_dimension(ret_cwd_poly);
 	//DEBUG_NOTICE("ret_cwd_dim: %ld\n", cwd_dim);
+#if 0
+	for(k = 0; k < CODEWORD_LEN; k++)
+	{
+		DEBUG_NOTICE("ret_et_cwd: %ld | %x %x\n",
+		             k,
+		             ret_et_cwd_poly[k],
+		             cwd_poly[k]);
+	}
+#endif
 	long long cwd_dim = check_cwd_dimension(ret_et_cwd_poly);
-	DEBUG_NOTICE("cwd_dim: %ld\n", cwd_dim);
+	DEBUG_NOTICE("ret_cwd_dim: %ld\n", cwd_dim);
+	//cwd_dim = check_cwd_dimension(cwd_poly);
+	//DEBUG_NOTICE("cwd_dim: %ld\n", cwd_dim);
 	if(MESSAGE_LEN < cwd_dim)
 	{
 		memset(ret_et_cwd_poly, 0xFF, sizeof(unsigned char) * CODEWORD_LEN);
@@ -2062,6 +2147,16 @@ int ret_et_check()
 		
 		her_lcc_check_result();
 	}
+#if 0	
+	else
+	{	
+		long long cwd_dim = check_cwd_dimension(ret_et_cwd_poly);
+		if(0xFF != ret_et_cwd_poly[0])
+		{
+			DEBUG_SYS("valid_ret_et_cwd_no_pass_dim: %ld\n", cwd_dim);
+		}
+	}
+#endif	
 
 	return ml_check_val;
 }

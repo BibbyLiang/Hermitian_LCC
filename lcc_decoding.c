@@ -1176,7 +1176,7 @@ long long check_cwd_dimension(unsigned char *cwd)
 			              ret_poly[i]);
 		}
 	}
-#endif	
+#endif
 	term_degree = poly_degree_cal(ret_poly);
 	cwd_dim = term_degree + 1 - (GF_Q) * (GF_Q - 1) / 2;
 
@@ -1543,12 +1543,13 @@ int koetter_intp_her_lcc(unsigned char *test_poly_seq,
 		intp_idx = chnl_rel_order_idx[CODEWORD_LEN - 1 - i];
 		//intp_idx = i;//there is a bug
 
-		DEBUG_NOTICE("intp point: %ld %ld | %x %x | %x\n",
+		DEBUG_NOTICE("intp point: %ld %ld | %x %x | %x %x\n",
 		             i,
 					 intp_idx,
 					 af_pnt[intp_idx][0],
 					 af_pnt[intp_idx][1],
-					 test_poly_seq[intp_idx]);
+					 test_poly_seq[intp_idx],
+					 cwd_poly[intp_idx]);
 		/**notice that these two val should be clear*/
 		min_idx = -1;
 		min_degree = 65536;

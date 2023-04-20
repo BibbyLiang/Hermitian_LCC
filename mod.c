@@ -174,6 +174,17 @@ int bpsk_demod(float **input_seq,
 	DEBUG_INFO("\n");
 #endif
 
+#if 1//for br debug
+	recv_poly[0] = 0xFF;
+	recv_poly[1] = 0xFF;
+	recv_poly[2] = 0x1;
+	recv_poly[3] = 0x1;
+	recv_poly[4] = 0x0;
+	recv_poly[5] = 0xFF;
+	recv_poly[6] = 0x1;
+	recv_poly[7] = 0x1;
+#endif
+
 	return 0;
 }
 
@@ -200,6 +211,12 @@ int trans_over_chnl()
 		DEBUG_NOTICE("%f %f\n", recv_seq[i][0], recv_seq[i][1]);
 	}
 	DEBUG_NOTICE("\n");
+#if 0
+	for(i = 0; i < 10; i++)
+	{
+		recv_seq[GF_Q * i][0] = -recv_seq[GF_Q * i][0] / 10;
+	}
+#endif	
 
 #if (1 == FAC_FREE_ERR)
 	recv_seq[0][0] = 1.223182;

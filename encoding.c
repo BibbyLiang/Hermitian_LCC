@@ -240,6 +240,17 @@ int rnd_msg_gen()
 	}
 #endif
 
+	/*for dbg*/
+	//memset(msg_poly, 0xFF, sizeof(unsigned char) * MESSAGE_LEN);
+
+#if 1//for br debug
+	msg_poly[0] = 0xFF;
+	msg_poly[1] = 0x0;
+	msg_poly[2] = 0xFF;
+	msg_poly[3] = 0x2;
+	msg_poly[4] = 0xFF;
+#endif
+
 #if (1 == FIX_INPUT_DBG)//fix input msg
 #if (1 == CFG_INTP_ORDER_ERR)//bug to be solved
 msg_poly[0] = 0xa;
