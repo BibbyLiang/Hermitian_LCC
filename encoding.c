@@ -243,12 +243,46 @@ int rnd_msg_gen()
 	/*for dbg*/
 	//memset(msg_poly, 0xFF, sizeof(unsigned char) * MESSAGE_LEN);
 
-#if 1//for br debug
-	msg_poly[0] = 0xFF;
-	msg_poly[1] = 0x0;
-	msg_poly[2] = 0xFF;
-	msg_poly[3] = 0x2;
-	msg_poly[4] = 0xFF;
+#if 0//for br debug
+	msg_poly[0] = 0xe;
+	msg_poly[1] = 0xff;
+	msg_poly[2] = 0x8;
+	msg_poly[3] = 0x3;
+	msg_poly[4] = 0x4;
+	msg_poly[5] = 0x7;
+	msg_poly[6] = 0x8;
+	msg_poly[7] = 0xb;
+	msg_poly[8] = 0x7;
+	msg_poly[9] = 0xa;
+	msg_poly[10] = 0xd;
+	msg_poly[11] = 0x4;
+	msg_poly[12] = 0xb;
+	msg_poly[13] = 0x3;
+	msg_poly[14] = 0x5;
+	msg_poly[15] = 0x9;
+	msg_poly[16] = 0x1;
+	msg_poly[17] = 0xa;
+	msg_poly[18] = 0x3;
+	msg_poly[19] = 0x7;
+	msg_poly[20] = 0x6;
+	msg_poly[21] = 0xc;
+	msg_poly[22] = 0xd;
+	msg_poly[23] = 0xb;
+	msg_poly[24] = 0x8;
+	msg_poly[25] = 0x9;
+	msg_poly[26] = 0x9;
+	msg_poly[27] = 0x7;
+	msg_poly[28] = 0xc;
+	msg_poly[29] = 0xc;
+	msg_poly[30] = 0x2;
+	msg_poly[31] = 0x2;
+	msg_poly[32] = 0x2;
+	msg_poly[33] = 0x4;
+	msg_poly[34] = 0x9;
+	msg_poly[35] = 0xd;
+	msg_poly[36] = 0xff;
+	msg_poly[37] = 0x7;
+	msg_poly[38] = 0x6;
 #endif
 
 #if (1 == FIX_INPUT_DBG)//fix input msg

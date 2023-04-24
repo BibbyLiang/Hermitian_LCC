@@ -19,6 +19,7 @@ extern long long tst_vct_num;
 extern unsigned char **tst_vct;
 extern unsigned char **ret_tst_vct;
 extern long long *tv_err;
+extern unsigned char **tv_est_msg;
 extern unsigned char **tv_est_cwd;
 extern unsigned char *tv_dec_output_flag;
 
