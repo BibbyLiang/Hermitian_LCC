@@ -114,6 +114,12 @@ void main()
 	ret_t_val_cal();
 #endif
 	recover_lag_poly_init();
+	
+#if (1 == CFG_BR)
+	br_poly_init();
+	br_g_poly_gen();
+	br_lag_poly_construct();
+#endif
 
 	for(eb2n0 = eb2n0_start; eb2n0 <= eb2n0_stop; eb2n0 = eb2n0 + eb2n0_step)
 	{
@@ -185,7 +191,7 @@ void main()
 			val = re_encoding_transform();
 #endif
 
-#if (1 == CFG_BR)
+#if 0//(1 == CFG_BR)
 			br_test();
 #endif
 
@@ -249,6 +255,10 @@ void main()
 
 	tst_vct_exit();
 	mod_exit();
+
+#if (1  == CFG_BR)
+	br_poly_exit();
+#endif
 
 	return;
 }

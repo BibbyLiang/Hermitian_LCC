@@ -4,10 +4,10 @@
 #define EARLY_TERMINATION	0
 #define ET_NUM				200
 
-#define GF_Q			4
+#define GF_Q			2
 #if (2 == GF_Q)
 #define GF_FIELD		4
-#define MESSAGE_LEN     5
+#define MESSAGE_LEN     3
 #endif
 #if (3 == GF_Q)
 #define GF_FIELD        8
@@ -35,7 +35,7 @@
 
 #define CFG_PRG_RET_ET	 0
 
-#define TEST_MODE		 0
+#define TEST_MODE		 1
 
 #define FIX_INPUT_DBG	 0
 
@@ -43,9 +43,7 @@
 
 #define OUTPUT_LOG		 0
 
-#define ETA				 1
-
-#define CFG_BR			 1
+#define ETA				 0
 
 #define MAX_DEGREE		 GF_FIELD
 #define CFG_DYM_SIZE	 1
@@ -63,7 +61,7 @@
 
 #define CFG_FIND_LATER_POLY 1
 
-#define CFG_FAC_FREE	 	0
+#define CFG_FAC_FREE	 	1
 #define CFG_STORE_DEV	 	CFG_FAC_FREE//it is efficient
 #define FAC_FREE_ERR	 	0
 #define DEV_RECORD		 	0
@@ -78,5 +76,9 @@
 #define CFG_P_NREL_SORT  0//there are some bugs.
 
 #define CFG_INTP_ORDER_ERR 0
+
+#define CFG_BR			  1
+#define CFG_ACD_BR		  0
+#define CFG_TV_K_POLY_IND 0
 
 #endif

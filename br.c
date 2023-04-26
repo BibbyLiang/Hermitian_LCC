@@ -584,16 +584,22 @@ int br_k_poly_ded(long long base_tv_idx, long long ded_tv_idx)
 	long long intp_idx = 0;
 	unsigned char sym_diff = 0xFF;
 
+#if (1 == CFG_TV_K_POLY_IND)
 	memcpy(br_k_poly[ded_tv_idx], br_k_poly[base_tv_idx], sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
-	
+#else
+	memcpy(br_k_poly[ded_tv_idx], br_k_com_poly, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+#endif
+
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
 		intp_idx = chnl_rel_order_idx[CODEWORD_LEN - 1 - i];
+
+#if (1 == CFG_TV_K_POLY_IND)
 		if(tst_vct[base_tv_idx][intp_idx] == tst_vct[ded_tv_idx][intp_idx])
 		{
 			continue;
 		}
-		
+
 		sym_diff = gf_add(tst_vct[base_tv_idx][intp_idx], tst_vct[ded_tv_idx][intp_idx]);
 		DEBUG_NOTICE("sym_diff: %ld | %x\n", intp_idx, sym_diff);
 		for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
@@ -611,6 +617,61 @@ int br_k_poly_ded(long long base_tv_idx, long long ded_tv_idx)
 				}
 			}
 		}
+#else
+		if((CODEWORD_LEN - 1 - ETA) >= i)
+		{
+			continue;
+		}
+		
+		if(0xFF == tst_vct[ded_tv_idx][intp_idx])
+		{
+			continue;
+		}
+
+		memset(tmp_poly, 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+
+		for(k = 0; k < MAX_POLY_TERM_SIZE; k++)
+		{
+			if(0xFF != br_lag_poly[intp_idx][k])
+			{
+				if((0xFF == tst_vct[ded_tv_idx][intp_idx])
+					|| (0xFF == br_lag_poly[intp_idx][k]))
+				{
+					tmp_poly[k] = 0xFF;
+				}
+				else if(0x0 == tst_vct[ded_tv_idx][intp_idx])
+				{
+					tmp_poly[k] = br_lag_poly[intp_idx][k];
+				}
+				else if(0x0 == br_lag_poly[intp_idx][k])
+				{
+					tmp_poly[k] = tst_vct[ded_tv_idx][intp_idx];
+				}
+				else
+				{
+					tmp_poly[k] = gf_multp(tst_vct[ded_tv_idx][intp_idx], br_lag_poly[intp_idx][k]);
+				}
+
+				if((0xFF == br_k_poly[ded_tv_idx][k])
+					&& (0xFF == tmp_poly[k]))
+				{
+					br_k_poly[ded_tv_idx][k] = 0xFF;
+				}
+				else if(0xFF == br_k_poly[ded_tv_idx][k])
+				{
+					br_k_poly[ded_tv_idx][k] = tmp_poly[k];
+				}
+				else if(0xFF == tmp_poly[k])
+				{
+					br_k_poly[ded_tv_idx][k] = br_k_poly[ded_tv_idx][k];
+				}
+				else
+				{
+					br_k_poly[ded_tv_idx][k] = gf_add(br_k_poly[ded_tv_idx][k], tmp_poly[k]);
+				}
+			}
+		}
+#endif
 	}
 
 #if (1 == TEST_MODE)
@@ -1341,7 +1402,7 @@ int br_q_poly_ret(long long tv_idx)
 		}
 		
 		tmp_deg = poly_degree_cal(br_q_poly[i]);
-		if(tmp_deg < min_q_deg)
+		if(tmp_deg <= min_q_deg)
 		{
 			min_q_deg = tmp_deg;
 			min_idx = i;
@@ -1380,14 +1441,14 @@ int br_test()
 	unsigned bug_flag = 0;
 
 	DEBUG_NOTICE("br test\n");	
-	br_poly_init();
-	br_g_poly_gen();
-	br_lag_poly_construct();
-	
+	//br_poly_init();
+	//br_g_poly_gen();
+	//br_lag_poly_construct();
+
 #if 0//for br debug
 	memcpy(tst_vct[0], tst_vct[1], sizeof(unsigned char) * CODEWORD_LEN);
 #endif
-	
+
 	for(i = 0; i < tst_vct_num; i++)
 	{
 		//br_poly_clear();
@@ -1449,7 +1510,7 @@ int br_test()
 		}
 	}
 
-	br_poly_exit();
+	//br_poly_exit();
 
 	return 0;
 }

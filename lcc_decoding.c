@@ -11,6 +11,7 @@
 #include "interpolation.h"
 #include "factorization.h"
 #include "re_encoding.h"
+#include "br.h"
 #include "lcc_decoding.h"
 
 #define PI	3.1415926
@@ -2563,7 +2564,7 @@ int her_lcc_check_result()
 #if (1 == OUTPUT_LOG)
 				frc = fopen(log_name, "a+");
 				fprintf(frc, "dec_err: %ld | %ld\n", i, tv_err[i]);
-				
+
 				if(0 == err_dump)
 				{
 					for(j = 0; j < symbol_num; j++)
@@ -2995,6 +2996,8 @@ int her_lcc_dec()
 	int ml_check_val = 0;
 	long long tv_recv_diff_num = 0, tv_est_err_num = 0;
 
+#if (0 == CFG_BR)
+
 	kot_node_clear();
 
 	her_cmm_intp();
@@ -3034,6 +3037,87 @@ int her_lcc_dec()
 
 	}
 	DEBUG_NOTICE("intp_cnt: %ld\n", intp_cnt);
+
+#else
+
+	int popov_flag = 1;
+	//long long genus = GF_Q * (GF_Q - 1) / 2;
+	//long long radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
+	long long ms_to_cnt = 0;
+	//unsigned bug_flag = 0;
+	br_poly_clear();
+
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		//br_poly_clear();
+		//bug_flag = 0;
+		ms_to_cnt = 0;
+
+		if(0 == i)
+		{
+			br_k_poly_construct(0);
+		}
+		else
+		{
+#if (0 == CFG_ACD_BR)		
+			br_k_poly_ded(0, i);
+#else			
+			br_k_poly_construct(i);
+#endif			
+		}
+		br_m_poly_construct(i);
+		br_v_matric_gen(i);
+
+		popov_flag = is_popov_form(i);
+		while(0 == popov_flag)
+		{
+			ms_reduction(i);
+			popov_flag = is_popov_form(i);
+			ms_to_cnt++;
+			if(CODEWORD_LEN < ms_to_cnt)
+			{
+				DEBUG_SYS("br_ms_to: %ld\n", ms_to_cnt);
+				break;
+			}
+		}
+
+		br_g_poly_ret(i);
+		br_q_poly_ret(i);
+		
+		her_fac(min_intp_poly, tv_est_msg[i], tv_est_cwd[i]);
+		
+		tv_dec_output_flag[i] = 1;
+
+#if 0		
+		for(j = 0; j < CODEWORD_LEN; j++)
+		{
+			DEBUG_NOTICE("br_cwd_check: %ld %ld | %x %x\n", i, j, tv_est_cwd[i][j], cwd_poly[j]);
+			if((tv_est_cwd[i][j] != cwd_poly[j])
+				&& (radius >= tv_err[i]))
+			{
+				DEBUG_SYS("br_test_err: %ld | %ld\n", i, tv_err[i]);
+				bug_flag = 1;
+			}
+		}
+		if(1 == bug_flag)
+		{
+			DEBUG_SYS("Transmission over Channel:\n");
+			for(i = 0; i < symbol_num; i++)
+			{
+				DEBUG_SYS("rx_symbol[%ld][0] = %f;\n", i, recv_seq[i][0]);
+				DEBUG_SYS("rx_symbol[%ld][1] = %f;\n", i, recv_seq[i][1]);
+			}
+			for(i = 0; i < MESSAGE_LEN; i++)
+			{
+				DEBUG_SYS("msg_poly[%ld] = 0x%x;\n",
+				          i,
+				          msg_poly[i]);
+			}
+		}
+#endif		
+	}
+
+#endif
 
 	her_lcc_check_result();
 
