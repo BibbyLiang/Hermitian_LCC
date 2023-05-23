@@ -7,15 +7,15 @@
 #define GF_Q			2
 #if (2 == GF_Q)
 #define GF_FIELD		4
-#define MESSAGE_LEN     3
+#define MESSAGE_LEN     5
 #endif
 #if (3 == GF_Q)
 #define GF_FIELD        8
-#define MESSAGE_LEN     5
+#define MESSAGE_LEN     4
 #endif
 #if (4 == GF_Q)
 #define GF_FIELD        16
-#define MESSAGE_LEN     39
+#define MESSAGE_LEN     49
 #endif
 #if (6 == GF_Q)
 #define GF_FIELD        64
@@ -50,8 +50,8 @@
 #if (0 == CFG_DYM_SIZE)
 #define MAX_POLY_TERM_SIZE	((MAX_DEGREE + 1) * (MAX_DEGREE + 1) * (MAX_DEGREE + 1))
 #else
-#define X_MAX_SIZE	     (2 * (MAX_DEGREE + 1))
-#define Y_MAX_SIZE		 (2 * (MAX_DEGREE + 1))
+#define X_MAX_SIZE	     (POLY_TERM_SIZE_FACTOR * (MAX_DEGREE + 1))
+#define Y_MAX_SIZE		 (POLY_TERM_SIZE_FACTOR * (MAX_DEGREE + 1))
 #define Z_MAX_SIZE		  2
 #define MAX_POLY_TERM_SIZE	(X_MAX_SIZE * Y_MAX_SIZE * Z_MAX_SIZE)
 #endif
@@ -79,6 +79,15 @@
 
 #define CFG_BR			  1
 #define CFG_ACD_BR		  0
-#define CFG_TV_K_POLY_IND 0
+#define CFG_TV_K_POLY_IND 1//this must set to 1, or some bug may be occured.
+
+#define CFG_SYS_GEN		  1
+#define CFG_SYS_GEN_POLY  GF_Q
+
+#if (0 == CFG_BR)
+#define POLY_TERM_SIZE_FACTOR	1
+#else
+#define POLY_TERM_SIZE_FACTOR	2
+#endif
 
 #endif

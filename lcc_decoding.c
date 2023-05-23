@@ -38,6 +38,8 @@ unsigned char **tv_est_msg;
 unsigned char **tv_est_cwd;
 long long *tv_err;
 unsigned char *tv_dec_output_flag;
+float *tst_vct_rel;
+long long *tst_vct_seq;
 
 unsigned char recover_lag_poly[CODEWORD_LEN][MAX_POLY_TERM_SIZE];
 unsigned char recover_lag_flag[CODEWORD_LEN];
@@ -473,8 +475,18 @@ int tst_vct_init()
 	{
 		tv_dec_output_flag[i] = 0;
 	}
-
-	DEBUG_NOTICE("tst_vct_init OK\n");
+	
+	tst_vct_rel = (float*)malloc(sizeof(float) * tst_vct_num);
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		tst_vct_rel[i] = 0;
+	}
+	
+	tst_vct_seq = (long long*)malloc(sizeof(long long) * tst_vct_num);
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		tst_vct_seq[i] = i;
+	}
 
 	return 0;
 }
@@ -520,6 +532,12 @@ int tst_vct_exit()
 	
 	free(tv_dec_output_flag);
 	tv_dec_output_flag = NULL;
+	
+	free(tst_vct_rel);
+	tst_vct_rel = NULL;
+	
+	free(tst_vct_seq);
+	tst_vct_seq = NULL;
 
 	return 0;
 }
@@ -532,6 +550,17 @@ int tst_vct_form()
 
 	for(i = 0; i < tst_vct_num; i++)
 	{
+		tst_vct_rel[i] = 0;
+	}	
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		tst_vct_seq[i] = i;
+	}
+
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		tst_vct_rel[i] = 1;
+	
 		for(j = 0; j < CODEWORD_LEN; j++)
 		{
 			cwd_idx = chnl_rel_order_idx[j];
@@ -563,6 +592,8 @@ int tst_vct_form()
 				{
 					pickout_sym = chnl_rel_scd_id[cwd_idx];
 				}
+				
+				tst_vct_rel[i] = tst_vct_rel[i] * chnl_rel_matrix[pickout_sym][cwd_idx];
 			}
 			DEBUG_NOTICE("tst_vct_cal: %ld %ld | %ld %ld | %ld\n",
 			             i,
@@ -572,6 +603,10 @@ int tst_vct_form()
 			             pickout_sym);
 			tst_vct[i][cwd_idx] = power_polynomial_table[pickout_sym][0];
 		}
+		
+		DEBUG_NOTICE("tst_vct_rel: %d | %f\n",
+		              i,
+		              tst_vct_rel[i]);
 	}
 
 	/*for test*/
@@ -682,6 +717,15 @@ int tst_vct_form()
 	tst_vct[0][62] = 0xff;
 	tst_vct[0][63] = 0x1;
 #endif
+
+	BubbleSort5(tst_vct_rel, tst_vct_num, tst_vct_seq);
+	for(i = 0; i < tst_vct_num; i++)
+	{
+		DEBUG_INFO("all_rel_sort: %ld | %f | %ld\n",
+		           i,
+		           tst_vct_rel[i],
+		           tst_vct_seq[i]);
+	}
 
 	return 0;
 }
@@ -1944,7 +1988,6 @@ int her_ret_fac_free(unsigned char *q0_poly,
 	if(1 == q0_all_zero)
 	{
 		memset(output_cwd, 0xFF, sizeof(unsigned char) * CODEWORD_LEN);
-
 		return 2;
 	}
 
@@ -1960,7 +2003,6 @@ int her_ret_fac_free(unsigned char *q0_poly,
 			else
 			{
 				q0_val = poly_eva_x_y(q0_poly, af_pnt[i][0], af_pnt[i][1]);
-
 				if(0xFF == q0_val)
 				{
 					output_cwd[i] = 0xFF;
@@ -2131,6 +2173,8 @@ int her_fac(unsigned char *poly,
               unsigned char *est_msg,
               unsigned char *est_cwd)
 {
+	//start = clock();
+
 #if (1 == CFG_FAC_FREE)
 	poly_q0q1_get_new(poly);
 	her_ret_fac_free(q0_poly_coef, q1_poly_coef, v_poly, est_cwd);
@@ -2182,6 +2226,9 @@ int her_fac(unsigned char *poly,
 	fac_msg2cwd(est_msg, est_cwd);
 
 #endif
+
+	//stop = clock();
+	//runtime = runtime + (stop - start) / 1000.0000;
 
 	return 0;
 }
@@ -2932,6 +2979,8 @@ int her_ucm_proc(long long tv_idx)
 	long long i = 0;
 	long long layer_idx = CODEWORD_LEN - 1 - ETA + 1;
 
+	//start = clock();
+
 	poly_init();
 	for(i = 0; i < KOT_INTP_POLY_NUM; i++)
 	{
@@ -2960,6 +3009,9 @@ int her_ucm_proc(long long tv_idx)
 						 intp_poly_coef,
 						 min_intp_poly);
 #endif
+
+	//stop = clock();
+	//runtime = runtime + (stop - start) / 1000.0000;
 
 	her_fac(min_intp_poly, tv_est_msg[tv_idx], tv_est_cwd[tv_idx]);
 
@@ -2995,6 +3047,7 @@ int her_lcc_dec()
 	long long i = 0, j = 0;
 	int ml_check_val = 0;
 	long long tv_recv_diff_num = 0, tv_est_err_num = 0;
+	long long tv_idx = 0;
 
 #if (0 == CFG_BR)
 
@@ -3005,31 +3058,33 @@ int her_lcc_dec()
 	intp_cnt = 0;
 	for(i = 0; i < tst_vct_num; i++)
 	{
-		her_ucm_proc(i);
+		tv_idx = tst_vct_seq[i];
+	
+		her_ucm_proc(tv_idx);
 
-		tv_dec_output_flag[i] = 1;
+		tv_dec_output_flag[tv_idx] = 1;
 
 #if (1 == CFG_PRG_DECODING)
 		if(0 == ml_check_val)
 		{
 			//her_cwd_check(tv_est_cwd[i]);
-			ml_check_val = MLcriterion(tv_est_cwd[i], recv_poly);
+			ml_check_val = MLcriterion(tv_est_cwd[tv_idx], recv_poly);
 			if(0 != ml_check_val)
 			{
 				tv_recv_diff_num = 0;
 				tv_est_err_num = 0;
 				for(j = 0; j < CODEWORD_LEN; j++)
 				{
-					if(recv_poly[j] != tv_est_cwd[i][j])
+					if(recv_poly[j] != tv_est_cwd[tv_idx][j])
 					{
 						tv_recv_diff_num++;
 					}
-					if(cwd_poly[j] != tv_est_cwd[i][j])
+					if(cwd_poly[j] != tv_est_cwd[tv_idx][j])
 					{
 						tv_est_err_num++;
 					}
 				}
-				DEBUG_NOTICE("ML pass: %ld %ld %ld %ld\n", i, tv_err[i], tv_recv_diff_num, tv_est_err_num);
+				DEBUG_NOTICE("ML pass: %ld %ld %ld %ld\n", tv_idx, tv_err[tv_idx], tv_recv_diff_num, tv_est_err_num);
 				break;
 			}
 		}
@@ -3049,30 +3104,35 @@ int her_lcc_dec()
 
 	for(i = 0; i < tst_vct_num; i++)
 	{
+		tv_idx = tst_vct_seq[i];
+	
 		//br_poly_clear();
 		//bug_flag = 0;
 		ms_to_cnt = 0;
-
-		if(0 == i)
+		
+		if(0 == tv_idx)
 		{
 			br_k_poly_construct(0);
 		}
 		else
 		{
 #if (0 == CFG_ACD_BR)		
-			br_k_poly_ded(0, i);
-#else			
-			br_k_poly_construct(i);
+			br_k_poly_ded(0, tv_idx);
+#else
+			br_k_poly_construct(tv_idx);
 #endif			
 		}
-		br_m_poly_construct(i);
-		br_v_matric_gen(i);
+		
+		br_m_poly_construct(tv_idx);
+		br_v_matric_gen(tv_idx);
 
-		popov_flag = is_popov_form(i);
+		//start = clock();
+
+		popov_flag = is_popov_form(tv_idx);
 		while(0 == popov_flag)
 		{
-			ms_reduction(i);
-			popov_flag = is_popov_form(i);
+			ms_reduction(tv_idx);
+			popov_flag = is_popov_form(tv_idx);
 			ms_to_cnt++;
 			if(CODEWORD_LEN < ms_to_cnt)
 			{
@@ -3081,12 +3141,15 @@ int her_lcc_dec()
 			}
 		}
 
-		br_g_poly_ret(i);
-		br_q_poly_ret(i);
-		
-		her_fac(min_intp_poly, tv_est_msg[i], tv_est_cwd[i]);
-		
-		tv_dec_output_flag[i] = 1;
+		//stop = clock();
+		//runtime = runtime + (stop - start) / 1000.0000;
+
+		br_g_poly_ret(tv_idx);
+		br_q_poly_ret(tv_idx);
+
+		her_fac(min_intp_poly, tv_est_msg[tv_idx], tv_est_cwd[tv_idx]);
+
+		tv_dec_output_flag[tv_idx] = 1;
 
 #if 0		
 		for(j = 0; j < CODEWORD_LEN; j++)

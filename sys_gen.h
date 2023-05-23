@@ -3,4 +3,6 @@
 
 #include "cfg_decoding.h"
 
+extern int sys_gen_test();
+
 #endif

@@ -12,6 +12,7 @@
 #include "factorization.h"
 #include "re_encoding.h"
 #include "br.h"
+#include "sys_gen.h"
 #include "lcc_decoding.h"
 
 void init_simulation()
@@ -140,7 +141,7 @@ void main()
 				DEBUG_SYS("Eb/N0: %f dB\n", eb2n0);
 				DEBUG_SYS("sim: %ld / %ld, err: %ld\n", i, sim_cnt, err_cnt);
 				DEBUG_SYS("Decoding Complexity: %f %f\n", (float)(add_cnt / i), (float)((mul_cnt + div_cnt) / i));
-				DEBUG_SYS("Decoding Measured Time: %f\n", runtime / ((float)i));
+				DEBUG_SYS("Decoding Measured Time: %f\n", runtime * 1000 / ((float)i));
 
 #if (1 == DEV_RECORD)
 				DEBUG_SYS("dev_1_avg_cnt: %f\n", (float)(dev_1_avg_cnt) / i);
@@ -154,7 +155,7 @@ void main()
 				fprintf(frc, "Eb/N0: %f dB\n", eb2n0);
 				fprintf(frc, "sim: %ld / %ld, err: %ld\n", i, sim_cnt, err_cnt);
 				fprintf(frc, "Decoding Complexity: %f %f\n", (float)(add_cnt / i), (float)((mul_cnt + div_cnt) / i));
-				fprintf(frc, "Decoding Measured Time: %f\n", runtime / ((float)i));
+				fprintf(frc, "Decoding Measured Time: %f\n", runtime * 1000 / ((float)i));
 
 #if (1 == DEV_RECORD)
 				fprintf(frc, "dev_1_avg_cnt: %f\n", (float)(dev_1_avg_cnt) / i);
@@ -176,13 +177,15 @@ void main()
 			start = clock();
 
 			tst_vct_form();
+			
+			//stop = clock();
+			//runtime = runtime + (stop - start) / 1000.0000;
 
 #if (1 == TV_TEST)
 			tv_test_mode();
 
 			stop = clock();
 			runtime = runtime + (stop - start) / 1000.0000;
-			cnt_switch = 0;
 			
 			continue;
 #endif
@@ -193,6 +196,9 @@ void main()
 
 #if 0//(1 == CFG_BR)
 			br_test();
+#endif
+#if (1 == CFG_SYS_GEN)
+			sys_gen_test();
 #endif
 
 			//koetter_interpolation_hermitian();
@@ -238,7 +244,7 @@ void main()
 		DEBUG_SYS("Eb/N0: %f dB\n", eb2n0);
 		DEBUG_SYS("sim: %ld, err: %ld\n", i, err_cnt);
 		DEBUG_SYS("Decoding Complexity: %f %f\n", (float)(add_cnt / i), (float)((mul_cnt + div_cnt) / i));
-		DEBUG_SYS("Decoding Measured Time: %f\n", runtime / ((float)i));
+		DEBUG_SYS("Decoding Measured Time: %f\n", runtime * 1000 / ((float)i));
 		DEBUG_SYS("*********************************\n");
 #if (1 == OUTPUT_LOG)
 		frc = fopen(log_name, "a+");
@@ -246,7 +252,7 @@ void main()
 		fprintf(frc, "Eb/N0: %f dB\n", eb2n0);
 		fprintf(frc, "sim: %ld, err: %ld\n", i, err_cnt);
 		fprintf(frc, "Decoding Complexity: %f %f\n", (float)(add_cnt / i), (float)((mul_cnt + div_cnt) / i));
-		fprintf(frc, "Decoding Measured Time: %f\n", runtime / ((float)i));
+		fprintf(frc, "Decoding Measured Time: %f\n", runtime * 1000 / ((float)i));
 		fprintf(frc, "*********************************\n");
 		fclose(frc);
 		frc = NULL;

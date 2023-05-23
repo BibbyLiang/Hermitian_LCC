@@ -507,6 +507,8 @@ int ret_tv_trans()
 			else
 			{
 				ret_tst_vct[i][j] = gf_add(tst_vct[i][j], ret_cwd_poly[j]);
+				/*Don't forget this!*/
+				/*notice that this ReT division should be wirriten with above ReT addition in the same place in the PAPER for Kot. Intp.*/
 				ret_tst_vct[i][j] = gf_div(ret_tst_vct[i][j], v_val[j]);
 			}
 #if 1
@@ -955,6 +957,7 @@ int ret_et_position_set(long long *ret_et_poition)
 	long long gf_sel_idx = 0;
 	unsigned char gf_sel_sym = 0xFF;
 	long long era_sym_cnt = (CODEWORD_LEN - MESSAGE_LEN - (GF_Q) * (GF_Q - 1) / 2) / GF_Q * GF_Q;
+	//long long era_sym_cnt = GF_Q;
 	
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
