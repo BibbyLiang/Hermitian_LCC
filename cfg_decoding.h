@@ -1,13 +1,13 @@
 #ifndef CFG_DECODING_H
 #define CFG_DECODING_H
 
-#define EARLY_TERMINATION	0
-#define ET_NUM				200
+#define EARLY_TERMINATION	1
+#define ET_NUM				150
 
 #define GF_Q			2
 #if (2 == GF_Q)
 #define GF_FIELD		4
-#define MESSAGE_LEN     5
+#define MESSAGE_LEN     3
 #endif
 #if (3 == GF_Q)
 #define GF_FIELD        8
