@@ -4,7 +4,7 @@
 #define EARLY_TERMINATION	1
 #define ET_NUM				150
 
-#define GF_Q			2
+#define GF_Q			4
 #if (2 == GF_Q)
 #define GF_FIELD		4
 #define MESSAGE_LEN     3
@@ -15,7 +15,7 @@
 #endif
 #if (4 == GF_Q)
 #define GF_FIELD        16
-#define MESSAGE_LEN     49
+#define MESSAGE_LEN     11
 #endif
 #if (6 == GF_Q)
 #define GF_FIELD        64
