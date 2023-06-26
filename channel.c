@@ -5,7 +5,7 @@
 #include "rnd.h"
 #include "math.h"
 
-float eb2n0 = 7.0;
+float eb2n0 = 5.0;
 
 float awgn_gen(float eb2n0_snr)
 {

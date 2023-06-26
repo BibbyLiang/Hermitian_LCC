@@ -1193,7 +1193,7 @@ long long check_cwd_dimension(unsigned char *cwd)
 					}
 
 					her_convert(ret_poly);
-#if 0
+#if 1
 					DEBUG_NOTICE("ret_poly_cal: %ld | %x %x | %ld %ld %ld | %x\n",
 								  i,
 								  cwd[i],

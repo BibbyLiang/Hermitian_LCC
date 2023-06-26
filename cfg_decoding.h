@@ -1,7 +1,7 @@
 #ifndef CFG_DECODING_H
 #define CFG_DECODING_H
 
-#define EARLY_TERMINATION	1
+#define EARLY_TERMINATION	0
 #define ET_NUM				150
 
 #define GF_Q			4
@@ -15,7 +15,7 @@
 #endif
 #if (4 == GF_Q)
 #define GF_FIELD        16
-#define MESSAGE_LEN     11
+#define MESSAGE_LEN     49
 #endif
 #if (6 == GF_Q)
 #define GF_FIELD        64
@@ -35,7 +35,7 @@
 
 #define CFG_PRG_RET_ET	 0
 
-#define TEST_MODE		 1
+#define TEST_MODE		 0
 
 #define FIX_INPUT_DBG	 0
 
