@@ -219,6 +219,14 @@ int trans_over_chnl()
 	}
 #endif	
 
+#if 1//for sys_br_test
+	recv_seq[0][0] = -recv_seq[0][0];
+	recv_seq[2][0] = recv_seq[2][0] + 0.5;
+	recv_seq[4][0] = recv_seq[4][0] + 0.4;
+	recv_seq[6][0] = recv_seq[6][0] + 0.3;
+	recv_seq[8][0] = recv_seq[8][0] + 0.2;
+#endif
+
 #if (1 == FAC_FREE_ERR)
 	recv_seq[0][0] = 1.223182;
 	recv_seq[0][1] = -0.617231;

@@ -457,11 +457,13 @@ unsigned char gf_location(unsigned char val)
 
 unsigned char gf_add(unsigned char a, unsigned char b)
 {
+#if 0
 #if (1 == GF_CAL_COUNT)
 	if(1 == cnt_switch)
 	{
 		add_cnt++;
 	}	
+#endif
 #endif
 
 	if(0xFF == a)
@@ -480,16 +482,27 @@ unsigned char gf_add(unsigned char a, unsigned char b)
 
 	sum_in_pow = gf_poly2pow(sum_in_poly);
 
+#if 1
+#if (1 == GF_CAL_COUNT)
+	if(1 == cnt_switch)
+	{
+		add_cnt++;
+	}	
+#endif
+#endif
+
 	return sum_in_pow;
 }
 
 unsigned char gf_multp(unsigned char a, unsigned char b)
 {
+#if 0
 #if (1 == GF_CAL_COUNT)
 	if(1 == cnt_switch)
 	{
 		mul_cnt++;
 	}
+#endif
 #endif
 
 	if((0xFF == a) || (0xFF == b))
@@ -509,6 +522,15 @@ unsigned char gf_multp(unsigned char a, unsigned char b)
 
 	unsigned char product_in_pow = (a + b) % (GF_FIELD - 1);
 
+#if 1
+#if (1 == GF_CAL_COUNT)
+	if(1 == cnt_switch)
+	{
+		mul_cnt++;
+	}
+#endif
+#endif
+
 	return product_in_pow;
 }
 
@@ -523,12 +545,16 @@ unsigned char gf_div(unsigned char a, unsigned char b)
 		DEBUG_NOTICE("div err.\n");
 		return 0xFF;
 	}
+
+#if 0
 #if (1 == GF_CAL_COUNT)
 	if(1 == cnt_switch)
 	{
 		div_cnt++;
 	}
 #endif
+#endif
+
 	//DEBUG_NOTICE("div: %x %x\n", a, b);
 	unsigned char quotient_in_pow = 0;
 	if(a >= b)
@@ -539,6 +565,13 @@ unsigned char gf_div(unsigned char a, unsigned char b)
 	{
 		quotient_in_pow = ((b / (GF_FIELD - 1) + 1) * (GF_FIELD - 1) + a - b) % (GF_FIELD - 1);
 	}
+
+#if (1 == GF_CAL_COUNT)
+	if(1 == cnt_switch)
+	{
+		div_cnt++;
+	}
+#endif
 
 	return quotient_in_pow;
 }

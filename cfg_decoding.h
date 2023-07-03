@@ -4,10 +4,10 @@
 #define EARLY_TERMINATION	0
 #define ET_NUM				150
 
-#define GF_Q			4
+#define GF_Q			2
 #if (2 == GF_Q)
 #define GF_FIELD		4
-#define MESSAGE_LEN     3
+#define MESSAGE_LEN     5
 #endif
 #if (3 == GF_Q)
 #define GF_FIELD        8
@@ -15,7 +15,7 @@
 #endif
 #if (4 == GF_Q)
 #define GF_FIELD        16
-#define MESSAGE_LEN     49
+#define MESSAGE_LEN     39
 #endif
 #if (6 == GF_Q)
 #define GF_FIELD        64
@@ -35,7 +35,7 @@
 
 #define CFG_PRG_RET_ET	 0
 
-#define TEST_MODE		 0
+#define TEST_MODE		 1
 
 #define FIX_INPUT_DBG	 0
 
@@ -83,6 +83,7 @@
 
 #define CFG_SYS_GEN		  1
 #define CFG_SYS_GEN_POLY  GF_Q
+#define CFG_FAST_FULL_GAU 1
 
 #if (0 == CFG_BR)
 #define POLY_TERM_SIZE_FACTOR	1

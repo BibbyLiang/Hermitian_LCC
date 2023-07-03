@@ -357,27 +357,10 @@ int poly_init()
 	{
 		y_degree = i % GF_Q;
 		z_degree = i / GF_Q;
-#if (0 == CFG_QUICK_POLY_SEARCH)		
-		for(j = 0; j < MAX_POLY_TERM_SIZE; j++)
-		{
-			if((0 == x_term_degree_table[j])
-				&& (y_degree == y_term_degree_table[j])
-				&& (z_degree == z_term_degree_table[j]))
-			{
-				intp_poly_coef[i][j] = 0x0;
-				DEBUG_NOTICE("intp_poly_coef: %ld | %ld %ld %ld | %x\n",
-				             i,
-				             x_term_degree_table[j],
-				             y_term_degree_table[j],
-				             z_term_degree_table[j],
-				             intp_poly_coef[i][j]);
-				break;
-			}
-		}
-#else
+
 		j = term_search(0, y_degree, z_degree);
 		intp_poly_coef[i][j] = 0x0;
-#endif
+
 		intp_poly_degree[i] = poly_degree_cal(intp_poly_coef[i]);
 		memcpy(intp_poly_tmp[i], intp_poly_coef[i], sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
 	}

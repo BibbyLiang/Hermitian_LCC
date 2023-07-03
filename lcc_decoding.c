@@ -292,7 +292,7 @@ int chnl_rel_cal(float **input_seq,
 		d1 = (input_seq[i][0] - (-1.0)) * (input_seq[i][0] - (-1.0))
 				+ (input_seq[i][1] - (0.0)) * (input_seq[i][1] - (0.0));
 
-#if 0/*for float precision problem*/
+#if 1/*for float precision problem*/
 		d0 = d0 / 1e2;
 		d1 = d1 / 1e2;
 #endif
