@@ -293,8 +293,8 @@ int chnl_rel_cal(float **input_seq,
 				+ (input_seq[i][1] - (0.0)) * (input_seq[i][1] - (0.0));
 
 #if 1/*for float precision problem*/
-		d0 = d0 / 1e2;
-		d1 = d1 / 1e2;
+		d0 = d0 / 1e3;
+		d1 = d1 / 1e3;
 #endif
 
 		/*for BPSK*/

@@ -219,7 +219,7 @@ int trans_over_chnl()
 	}
 #endif	
 
-#if 1//for sys_br_test
+#if 0//for sys_br_test
 	recv_seq[0][0] = -recv_seq[0][0];
 	recv_seq[2][0] = recv_seq[2][0] + 0.5;
 	recv_seq[4][0] = recv_seq[4][0] + 0.4;

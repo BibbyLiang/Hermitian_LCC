@@ -4,7 +4,7 @@
 #define EARLY_TERMINATION	0
 #define ET_NUM				150
 
-#define GF_Q			2
+#define GF_Q			4
 #if (2 == GF_Q)
 #define GF_FIELD		4
 #define MESSAGE_LEN     5
@@ -35,7 +35,7 @@
 
 #define CFG_PRG_RET_ET	 0
 
-#define TEST_MODE		 1
+#define TEST_MODE		 0
 
 #define FIX_INPUT_DBG	 0
 

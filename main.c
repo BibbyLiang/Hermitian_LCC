@@ -199,7 +199,7 @@ void main()
 #endif
 #if (1 == CFG_SYS_GEN)
 			sys_gen_test();
-			sys_br_test();
+			//sys_br_test();
 			sys_kot_test();
 #endif
 
