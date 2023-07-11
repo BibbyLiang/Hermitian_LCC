@@ -3,8 +3,10 @@
 
 #include "cfg_decoding.h"
 
+extern unsigned char br_g_gamma_poly[MAX_POLY_TERM_SIZE];
 extern unsigned char br_g_poly[MAX_POLY_TERM_SIZE];
 extern unsigned char **br_lag_poly;
+extern unsigned char **br_lag_part_poly;
 extern unsigned char **br_k_poly;
 extern unsigned char br_k_com_poly[MAX_POLY_TERM_SIZE];
 extern unsigned char **br_zk_poly;

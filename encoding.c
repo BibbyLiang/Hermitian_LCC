@@ -336,7 +336,12 @@ msg_poly[38] = 0x6;
 #endif
 
 #if 0//for sys_br_test
-	memset(msg_poly, 0x0, sizeof(unsigned char) * MESSAGE_LEN);
+	//memset(msg_poly, 0x0, sizeof(unsigned char) * MESSAGE_LEN);
+	msg_poly[0] = 0xFF;
+	msg_poly[1] = 0x1;
+	msg_poly[2] = 0xFF;
+	msg_poly[3] = 0xFF;
+	msg_poly[4] = 0x1;
 #endif
 
 	return 0;

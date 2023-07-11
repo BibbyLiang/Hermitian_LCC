@@ -913,7 +913,7 @@ int keep_position_set(long long *keep_poition)
 #else
 	BubbleSort4(unrel_order, (int)(CODEWORD_LEN - keep_cnt), unrel_order_idx);
 #endif
-
+#if (0 == CFG_SYS_GEN)
 	tmp_cnt = 0;
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
@@ -933,6 +933,7 @@ int keep_position_set(long long *keep_poition)
 		             chnl_rel_order_idx[i]);
 		tmp_cnt++;
 	}
+#endif	
 	free(rel_order);
 	rel_order = NULL;
 	free(rel_order_idx);

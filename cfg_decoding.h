@@ -67,7 +67,7 @@
 #define DEV_RECORD		 	0
 #define CFG_CWD_DIM_CHECK	1
 
-#define CFG_RET			 0
+#define CFG_RET			 1
 #define CFG_FAST_RET	 1
 #define CFG_Y_RET_STORE  CFG_FAST_RET//there are some bugs, it cannot be set as 0 independently
 #define CFG_RET_ETA_OPT  0
@@ -84,6 +84,7 @@
 #define CFG_SYS_GEN		  1
 #define CFG_SYS_GEN_POLY  GF_Q
 #define CFG_FAST_FULL_GAU 1
+#define CFG_ZERO_COL_CHECK_GAU_ELM 1
 
 #if (0 == CFG_BR)
 #define POLY_TERM_SIZE_FACTOR	1

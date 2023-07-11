@@ -122,6 +122,10 @@ void main()
 	br_lag_poly_construct();
 #endif
 
+#if (1 == CFG_SYS_GEN)
+	sys_mat_init();
+#endif
+
 	for(eb2n0 = eb2n0_start; eb2n0 <= eb2n0_stop; eb2n0 = eb2n0 + eb2n0_step)
 	{
 		clear_sim();
@@ -173,7 +177,7 @@ void main()
 			trans_over_chnl();
 			chnl_rel_cal(recv_seq, symbol_num);
 
-			cnt_switch = 1;
+			cnt_switch = 0;
 			start = clock();
 
 			tst_vct_form();
@@ -190,8 +194,10 @@ void main()
 			continue;
 #endif
 
+#if (0 == CFG_SYS_GEN)
 #if (1 == CFG_RET)
 			val = re_encoding_transform();
+#endif
 #endif
 
 #if 0//(1 == CFG_BR)
@@ -199,16 +205,15 @@ void main()
 #endif
 #if (1 == CFG_SYS_GEN)
 			sys_gen_test();
-			//sys_br_test();
-			sys_kot_test();
-#endif
-
+			sys_br_test();
+			//sys_kot_test();
+#else
 			//koetter_interpolation_hermitian();
 			if(0 == val)
 			{
 				her_lcc_dec();
 			}
-
+#endif
 			stop = clock();
 			runtime = runtime + (stop - start) / 1000.0000;
 			cnt_switch = 0;

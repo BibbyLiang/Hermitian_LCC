@@ -49,6 +49,12 @@ extern int her_fac(unsigned char *poly,
 	                 unsigned char *est_msg,
 	                 unsigned char *est_cwd);
 extern int her_fac_free(unsigned char *poly, unsigned char *est_cwd);
+extern int her_ret_fac_free(unsigned char *q0_poly,
+								unsigned char *q1_poly,
+								unsigned char *v_poly,
+								unsigned char *output_cwd);
+extern int fac_msg2cwd(unsigned char *msg,
+              		 		unsigned char *cwd);
 extern int kot_node_init();
 extern int kot_node_clear();
 extern int kot_node_exit();

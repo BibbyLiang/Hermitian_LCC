@@ -14,8 +14,10 @@
 #include "br.h"
 #include "lcc_decoding.h"
 
+unsigned char br_g_gamma_poly[MAX_POLY_TERM_SIZE];
 unsigned char br_g_poly[MAX_POLY_TERM_SIZE];
 unsigned char **br_lag_poly;
+unsigned char **br_lag_part_poly;
 unsigned char **br_k_poly;
 unsigned char br_k_com_poly[MAX_POLY_TERM_SIZE];
 unsigned char **br_zk_poly;
@@ -35,13 +37,16 @@ int br_poly_init()
 	long long i = 0, j = 0, k = 0;
 	
 	br_lag_poly = (unsigned char**)malloc(sizeof(unsigned char*) * CODEWORD_LEN);
+	br_lag_part_poly = (unsigned char**)malloc(sizeof(unsigned char*) * CODEWORD_LEN);
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
 		br_lag_poly[i] = (unsigned char*)malloc(sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		br_lag_part_poly[i] = (unsigned char*)malloc(sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
 	}
 	for(i = 0; i < CODEWORD_LEN; i++)
 	{
 		memset(br_lag_poly[i], 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
+		memset(br_lag_part_poly[i], 0xFF, sizeof(unsigned char) * MAX_POLY_TERM_SIZE);
 	}
 
 	br_k_poly = (unsigned char**)malloc(sizeof(unsigned char*) * tst_vct_num);
@@ -129,9 +134,13 @@ int br_poly_exit()
 	{
   		free(br_lag_poly[i]);
 		br_lag_poly[i] = NULL;
+		free(br_lag_part_poly[i]);
+		br_lag_part_poly[i] = NULL;
   	}
 	free(br_lag_poly);
 	br_lag_poly = NULL;
+	free(br_lag_part_poly);
+	br_lag_part_poly = NULL;
 
 	for(i = 0; i < tst_vct_num; i++)
 	{
