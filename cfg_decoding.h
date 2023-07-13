@@ -43,7 +43,7 @@
 
 #define OUTPUT_LOG		 0
 
-#define ETA				 0
+#define ETA				 6
 
 #define MAX_DEGREE		 GF_FIELD
 #define CFG_DYM_SIZE	 1

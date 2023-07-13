@@ -243,10 +243,11 @@ long long poly_degree_cal(unsigned char *poly)
 
 	long long w_z = GF_Q * pole_basis_pow[MESSAGE_LEN - 1][0]
 				  + (GF_Q + 1) * pole_basis_pow[MESSAGE_LEN - 1][1];
-
+#if(0 == CFG_SYS_GEN)
 #if (1 == CFG_RET)
 	//w_z = w_z - keep_cnt;//notice this
 	w_z = w_z - ret_keep_sym_cnt;
+#endif
 #endif
 
 	for(i = 0; i < MAX_POLY_TERM_SIZE; i++)

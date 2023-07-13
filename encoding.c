@@ -336,12 +336,53 @@ msg_poly[38] = 0x6;
 #endif
 
 #if 0//for sys_br_test
-	//memset(msg_poly, 0x0, sizeof(unsigned char) * MESSAGE_LEN);
-	msg_poly[0] = 0xFF;
-	msg_poly[1] = 0x1;
-	msg_poly[2] = 0xFF;
-	msg_poly[3] = 0xFF;
-	msg_poly[4] = 0x1;
+	memset(msg_poly, 0xFF, sizeof(unsigned char) * MESSAGE_LEN);
+	//msg_poly[0] = 0xFF;
+	//msg_poly[1] = 0x1;
+	//msg_poly[2] = 0xFF;
+	//msg_poly[3] = 0xFF;
+	//msg_poly[4] = 0x1;
+#endif
+#if 0//for sys bug
+msg_poly[0] = 0x4;
+msg_poly[1] = 0x3;
+msg_poly[2] = 0xe;
+msg_poly[3] = 0x5;
+msg_poly[4] = 0xc;
+msg_poly[5] = 0x4;
+msg_poly[6] = 0xc;
+msg_poly[7] = 0xd;
+msg_poly[8] = 0x4;
+msg_poly[9] = 0x7;
+msg_poly[10] = 0x7;
+msg_poly[11] = 0xc;
+msg_poly[12] = 0x9;
+msg_poly[13] = 0xc;
+msg_poly[14] = 0x4;
+msg_poly[15] = 0x6;
+msg_poly[16] = 0x6;
+msg_poly[17] = 0x9;
+msg_poly[18] = 0xb;
+msg_poly[19] = 0xb;
+msg_poly[20] = 0xa;
+msg_poly[21] = 0xe;
+msg_poly[22] = 0xe;
+msg_poly[23] = 0x5;
+msg_poly[24] = 0xc;
+msg_poly[25] = 0x4;
+msg_poly[26] = 0x5;
+msg_poly[27] = 0xa;
+msg_poly[28] = 0xff;
+msg_poly[29] = 0xe;
+msg_poly[30] = 0x5;
+msg_poly[31] = 0x9;
+msg_poly[32] = 0x8;
+msg_poly[33] = 0xc;
+msg_poly[34] = 0x9;
+msg_poly[35] = 0x0;
+msg_poly[36] = 0x5;
+msg_poly[37] = 0x6;
+msg_poly[38] = 0x5;
 #endif
 
 	return 0;

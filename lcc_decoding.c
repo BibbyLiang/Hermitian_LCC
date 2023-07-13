@@ -12,6 +12,7 @@
 #include "factorization.h"
 #include "re_encoding.h"
 #include "br.h"
+#include "sys_gen.h"
 #include "lcc_decoding.h"
 
 #define PI	3.1415926
@@ -56,6 +57,9 @@ long long dev_2_avg_cnt = 0;
 long long dev_out_cnt = 0;
 
 long long new_erasure_val = (CODEWORD_LEN - (((MESSAGE_LEN + (GF_Q) * (GF_Q - 1) / 2) / GF_Q + 1) * GF_Q));
+
+long long sys_ret_ok_cnt = 0;
+long long lag_ret_ok_cnt = 0;
 
 int chnl_rel_seq_order()
 {
@@ -293,8 +297,8 @@ int chnl_rel_cal(float **input_seq,
 				+ (input_seq[i][1] - (0.0)) * (input_seq[i][1] - (0.0));
 
 #if 1/*for float precision problem*/
-		d0 = d0 / 1e3;
-		d1 = d1 / 1e3;
+		d0 = d0 / 1e4;
+		d1 = d1 / 1e4;
 #endif
 
 		/*for BPSK*/
@@ -610,9 +614,9 @@ int tst_vct_form()
 	}
 
 	/*for test*/
-	//memcpy(tst_vct[0], recv_poly, sizeof(unsigned char) * CODEWORD_LEN);
+	//memcpy(tst_vct[1], tst_vct[0], sizeof(unsigned char) * CODEWORD_LEN);
 	//memcpy(tst_vct[2], tst_vct[0], sizeof(unsigned char) * CODEWORD_LEN);
-	//memcpy(tst_vct[0], recv_poly, sizeof(unsigned char) * CODEWORD_LEN);
+	//memcpy(tst_vct[3], tst_vct[0], sizeof(unsigned char) * CODEWORD_LEN);
 
 	for(i = 0; i < tst_vct_num; i++)
 	{
@@ -1258,7 +1262,13 @@ int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd, long long tv_id
 	{
 		//err_cnt++;
 		genus = GF_Q * (GF_Q - 1) / 2;
-		radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
+		//radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
+		/*for GS (m = 1), that is the GS decoding bound*/
+		radius = (CODEWORD_LEN - (MESSAGE_LEN - genus + 1) - 2 * genus) / 2;
+		if(0 == ((MESSAGE_LEN - genus + 1) % 2))
+		{
+			radius = radius - 1;
+		}
 		for(i = 0; i < CODEWORD_LEN; i++)
 		{
 			//if(cwd_poly[i] != recv_poly[i])
@@ -1454,7 +1464,13 @@ int check_result_msg(unsigned char *msg, unsigned char *est_msg, long long tv_id
 	{
 		//err_cnt++;
 		genus = GF_Q * (GF_Q - 1) / 2;
-		radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
+		//radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
+		/*for GS (m = 1), that is the GS decoding bound*/
+		radius = (CODEWORD_LEN - (MESSAGE_LEN - genus + 1) - 2 * genus) / 2;
+		if(0 == ((MESSAGE_LEN - genus + 1) % 2))
+		{
+			radius = radius - 1;
+		}
 		for(i = 0; i < CODEWORD_LEN; i++)
 		{
 			//if(cwd_poly[i] != recv_poly[i])
@@ -2551,8 +2567,46 @@ int her_lcc_check_result()
 	int cwd_err_val = CODEWORD_LEN, msg_err_val = MESSAGE_LEN;
 	int check_val = 0;
 	long long genus = GF_Q * (GF_Q - 1) / 2;
-	long long radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
+	//long long radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
+	/*for GS (m = 1), that is the GS decoding bound*/
+	long long radius = (CODEWORD_LEN - (MESSAGE_LEN - genus + 1) - 2 * genus) / 2;
+	if(0 == ((MESSAGE_LEN - genus + 1) % 2))
+	{
+		radius = radius - 1;
+	}
 	unsigned char err_dump = 0;
+
+#if (1 == CFG_SYS_GEN)
+	check_val = 0;
+	check_val = sys_check_ret_cwd();
+	if(0 == check_val)
+	{
+		sys_ret_ok_cnt++;
+		DEBUG_NOTICE("sys_ret_ok_cnt: %ld\n", sys_ret_ok_cnt);
+		return 0;
+	}
+#endif
+#if (1 == CFG_RET)/*add this to check the ret_cwd_poly*/
+	check_val = 0;
+	for(i = 0; i < CODEWORD_LEN; i++)
+	{
+		if(ret_cwd_poly[i] != cwd_poly[i])
+		{
+			//DEBUG_SYS("lag_ret_diff: %ld | %x %x\n", i, ret_cwd_poly[i], cwd_poly[i]);
+			check_val = 1;
+			break;
+		}
+	}
+	if(0 == check_val)
+	{
+		lag_ret_ok_cnt++;
+		memcpy(est_cwd_poly, ret_cwd_poly, sizeof(unsigned char) * CODEWORD_LEN);
+		cwd2msg(ret_cwd_poly, est_msg_poly);
+		DEBUG_NOTICE("lag_ret_ok_cnt: %ld\n", lag_ret_ok_cnt);
+
+		return 0;
+	}
+#endif
 	
 	for(i = 0; i < tst_vct_num; i++)
 	{

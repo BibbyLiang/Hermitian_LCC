@@ -177,7 +177,7 @@ void main()
 			trans_over_chnl();
 			chnl_rel_cal(recv_seq, symbol_num);
 
-			cnt_switch = 0;
+			cnt_switch = 1;
 			start = clock();
 
 			tst_vct_form();
