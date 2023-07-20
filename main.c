@@ -126,6 +126,10 @@ void main()
 	sys_mat_init();
 #endif
 
+#if (0 != CFG_RET_TRY_DEP)
+	sys_ret_try_init();
+#endif
+
 	for(eb2n0 = eb2n0_start; eb2n0 <= eb2n0_stop; eb2n0 = eb2n0 + eb2n0_step)
 	{
 		clear_sim();
@@ -271,6 +275,10 @@ void main()
 
 #if (1  == CFG_BR)
 	br_poly_exit();
+#endif
+
+#if (0 != CFG_RET_TRY_DEP)
+	sys_ret_try_exit();
 #endif
 
 	return;

@@ -343,6 +343,47 @@ msg_poly[38] = 0x6;
 	//msg_poly[3] = 0xFF;
 	//msg_poly[4] = 0x1;
 #endif
+#if 0//for sys stat. bug
+msg_poly[0] = 0xff;
+msg_poly[1] = 0x1;
+msg_poly[2] = 0x3;
+msg_poly[3] = 0x6;
+msg_poly[4] = 0x6;
+msg_poly[5] = 0x3;
+msg_poly[6] = 0x9;
+msg_poly[7] = 0x5;
+msg_poly[8] = 0x7;
+msg_poly[9] = 0x8;
+msg_poly[10] = 0x5;
+msg_poly[11] = 0xff;
+msg_poly[12] = 0x0;
+msg_poly[13] = 0x1;
+msg_poly[14] = 0x2;
+msg_poly[15] = 0xb;
+msg_poly[16] = 0x3;
+msg_poly[17] = 0x7;
+msg_poly[18] = 0xc;
+msg_poly[19] = 0x7;
+msg_poly[20] = 0xd;
+msg_poly[21] = 0x4;
+msg_poly[22] = 0xb;
+msg_poly[23] = 0x3;
+msg_poly[24] = 0x5;
+msg_poly[25] = 0x0;
+msg_poly[26] = 0x8;
+msg_poly[27] = 0xe;
+msg_poly[28] = 0x6;
+msg_poly[29] = 0x2;
+msg_poly[30] = 0x0;
+msg_poly[31] = 0x1;
+msg_poly[32] = 0x5;
+msg_poly[33] = 0x5;
+msg_poly[34] = 0xa;
+msg_poly[35] = 0xa;
+msg_poly[36] = 0x2;
+msg_poly[37] = 0x4;
+msg_poly[38] = 0xd;
+#endif
 #if 0//for sys bug
 msg_poly[0] = 0x4;
 msg_poly[1] = 0x3;

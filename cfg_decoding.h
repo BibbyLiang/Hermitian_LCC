@@ -2,7 +2,7 @@
 #define CFG_DECODING_H
 
 #define EARLY_TERMINATION	0
-#define ET_NUM				150
+#define ET_NUM				100
 
 #define GF_Q			4
 #if (2 == GF_Q)
@@ -43,7 +43,7 @@
 
 #define OUTPUT_LOG		 0
 
-#define ETA				 6
+#define ETA				 0
 
 #define MAX_DEGREE		 GF_FIELD
 #define CFG_DYM_SIZE	 1
@@ -83,8 +83,10 @@
 
 #define CFG_SYS_GEN		  1
 #define CFG_SYS_GEN_POLY  GF_Q
-#define CFG_FAST_FULL_GAU 1
+#define CFG_FAST_FULL_GAU 1//there may be some bugs
 #define CFG_ZERO_COL_CHECK_GAU_ELM 1
+#define CFG_RET_TRY_DEP	  3
+#define CFG_RET_TRY_NUM	  3
 
 #if (0 == CFG_BR)
 #define POLY_TERM_SIZE_FACTOR	1

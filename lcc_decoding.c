@@ -1264,7 +1264,7 @@ int check_result_cwd(unsigned char *cwd, unsigned char *est_cwd, long long tv_id
 		genus = GF_Q * (GF_Q - 1) / 2;
 		//radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
 		/*for GS (m = 1), that is the GS decoding bound*/
-		radius = (CODEWORD_LEN - (MESSAGE_LEN - genus + 1) - 2 * genus) / 2;
+		radius = (CODEWORD_LEN - (MESSAGE_LEN + genus - 1) - 2 * genus) / 2;
 		if(0 == ((MESSAGE_LEN - genus + 1) % 2))
 		{
 			radius = radius - 1;
@@ -1466,7 +1466,7 @@ int check_result_msg(unsigned char *msg, unsigned char *est_msg, long long tv_id
 		genus = GF_Q * (GF_Q - 1) / 2;
 		//radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
 		/*for GS (m = 1), that is the GS decoding bound*/
-		radius = (CODEWORD_LEN - (MESSAGE_LEN - genus + 1) - 2 * genus) / 2;
+		radius = (CODEWORD_LEN - (MESSAGE_LEN + genus - 1) - 2 * genus) / 2;
 		if(0 == ((MESSAGE_LEN - genus + 1) % 2))
 		{
 			radius = radius - 1;
@@ -2519,7 +2519,8 @@ int check_result_tv(unsigned char *tv, unsigned char *est_cwd, unsigned char *es
 	else
 	{
 		genus = GF_Q * (GF_Q - 1) / 2;
-		radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
+		//radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
+		radius = (CODEWORD_LEN - (MESSAGE_LEN + genus - 1) - 2 * genus) / 2;
 		for(i = 0; i < CODEWORD_LEN; i++)
 		{
 			if(cwd_poly[i] != tv[i])
@@ -2569,7 +2570,7 @@ int her_lcc_check_result()
 	long long genus = GF_Q * (GF_Q - 1) / 2;
 	//long long radius = (CODEWORD_LEN - MESSAGE_LEN - genus + 1 - 1) / 2;
 	/*for GS (m = 1), that is the GS decoding bound*/
-	long long radius = (CODEWORD_LEN - (MESSAGE_LEN - genus + 1) - 2 * genus) / 2;
+	long long radius = (CODEWORD_LEN - (MESSAGE_LEN + genus - 1) - 2 * genus) / 2;
 	if(0 == ((MESSAGE_LEN - genus + 1) % 2))
 	{
 		radius = radius - 1;
@@ -2582,8 +2583,17 @@ int her_lcc_check_result()
 	if(0 == check_val)
 	{
 		sys_ret_ok_cnt++;
+		err_this_frame = 0;
 		DEBUG_NOTICE("sys_ret_ok_cnt: %ld\n", sys_ret_ok_cnt);
-		return 0;
+
+		//return 0;
+	}
+	
+	check_val = 0;
+	check_val = sys_ret_try_cwd_check();
+	if(0 == check_val)
+	{
+		err_this_frame = 0;
 	}
 #endif
 #if (1 == CFG_RET)/*add this to check the ret_cwd_poly*/
@@ -2602,9 +2612,10 @@ int her_lcc_check_result()
 		lag_ret_ok_cnt++;
 		memcpy(est_cwd_poly, ret_cwd_poly, sizeof(unsigned char) * CODEWORD_LEN);
 		cwd2msg(ret_cwd_poly, est_msg_poly);
+		err_this_frame = 0;
 		DEBUG_NOTICE("lag_ret_ok_cnt: %ld\n", lag_ret_ok_cnt);
 
-		return 0;
+		//return 0;
 	}
 #endif
 	

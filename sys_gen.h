@@ -9,5 +9,8 @@ extern int sys_gen_test();
 extern int sys_br_test();
 extern int sys_kot_test();
 extern int sys_check_ret_cwd();
+extern int sys_ret_try_init();
+extern int sys_ret_try_exit();
+extern int sys_ret_try_cwd_check();
 
 #endif
